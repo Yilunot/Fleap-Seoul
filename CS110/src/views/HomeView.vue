@@ -14,10 +14,11 @@ const userStore = useUserStore()
 // Example mock data for posts and users
 const publicPosts = ref([
   { id: 1, author: 'Alice01@gmail.com', date: '2025-07-07', content: 'Hello world!' },
-  { id: 2, author: 'Bob02@gmail.com', date: '2025-07-08', content: 'Vue is awesome!' }
+  { id: 2, author: 'Bob02@gmail.com', date: '2025-07-08', content: 'This is awesome!' },
+  { id: 3, author: 'Carol03@gmail.com', date: '2025-07-09', content: 'I Love Korea!' }
 ])
 const userPosts = ref([
-  { id: 3, author: userStore.user?.username || '', date: '2025-07-09', content: 'My first post!' }
+  { id: 4, author: userStore.user?.username || '', date: '2025-07-09', content: 'My first post!' }
 ])
 const suggestedUsers = ref([
   { id: 1, username: 'Alice01@gmail.com' },
@@ -61,7 +62,7 @@ function handleFollow(userId) {
 
       <div class="right-column">
         <Followers
-          :users="suggestedUsers.slice(0, 5)"
+          :users="suggestedUsers"
           :canFollow="!!userStore.user"
           :onFollow="handleFollow"
           title="Suggested Followers"
