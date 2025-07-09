@@ -8,10 +8,8 @@ import CreatePost from '@/components/CreatePost.vue'
 import UserStats from '@/components/UserStats.vue'
 import LogOutButton from '@/components/LogOutButton.vue'
 
-// Use the user store
 const userStore = useUserStore()
 
-// Example mock data for posts and users
 const publicPosts = ref([
   { id: 1, author: 'Alice01@gmail.com', date: '2025-07-07', content: 'Hello world!' },
   { id: 2, author: 'Bob02@gmail.com', date: '2025-07-08', content: 'This is awesome!' },
@@ -29,7 +27,6 @@ const suggestedUsers = ref([
   { id: 6, username: 'Frank06@gmail.com' }
 ])
 
-// Handler for creating a post (mock)
 function handlePost(content) {
   userPosts.value.unshift({
     id: Date.now(),
@@ -39,7 +36,6 @@ function handlePost(content) {
   })
 }
 
-// Handler for following a user (mock)
 function handleFollow(userId) {
   alert(`Followed user with id: ${userId}`)
 }
@@ -54,7 +50,6 @@ function handleFollow(userId) {
         <LoginButton v-else />
       </div>
 
-      <!-- Center column: Posts -->
       <div class="center-column">
         <CreatePost v-if="userStore.user" :onPost="handlePost" />
         <PostFeed :posts="userStore.user ? userPosts : publicPosts" />
