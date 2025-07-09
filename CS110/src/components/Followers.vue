@@ -14,3 +14,17 @@
 <script setup>
 defineProps(['users', 'canFollow', 'onFollow', 'title']);
 </script>
+//Mock data for testing
+<script>
+export default {
+  data() {
+    return {
+      users: [
+        { id: 1, username: 'alice' },
+        { id: 2, username: 'bob' },
+        { id: 3, username: 'charlie' }
+      ]
+    }
+  }
+}
+</script>

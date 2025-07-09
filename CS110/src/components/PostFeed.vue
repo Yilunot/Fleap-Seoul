@@ -11,6 +11,7 @@ import PostItem from './PostItem.vue';
 const posts = ref([
   { id: 1, author: 'User1', date: '2023-01-01', content: 'Post content 1' },
   { id: 2, author: 'User2', date: '2023-01-02', content: 'Post content 2' },
+  
 ]);
 </script>
 
