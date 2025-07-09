@@ -1,5 +1,7 @@
 <template>
-  <button @click="login">Log In</button>
+  <div class="login-button">
+    <button @click="login">Log In</button>
+  </div>
 </template>
 
 <script setup>
@@ -13,8 +15,14 @@ const login = () => {
 </script>
 
 <style scoped>
+
+.login-button {
+  display: flex;
+  justify-content: left;
+  margin-top: 20px;
+}
 button {
-  background-color: #42b983;
+  background-color: #0c5fe4;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -22,7 +30,8 @@ button {
   cursor: pointer;
 }
 
+
 button:hover {
-  background-color: #369e7a;
+  background-color: #4c599d;
 }
 </style>

@@ -1,14 +1,19 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
+import { useUserStore } from './stores/user.js'
+const userStore = useUserStore()
 </script>
 
 <template>
   <header>
     <div class="Navbar-header">
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/login">Login</RouterLink>
-      </nav>
+     <nav>
+  <RouterLink to="/">Home</RouterLink>
+  <RouterLink v-if="userStore.user" :to="`/profile/${userStore.user.username}`">Profile</RouterLink>
+  <RouterLink v-if="userStore.user" to="/" @click.native="userStore.logout">Logout</RouterLink>
+  <RouterLink v-else to="/login">Login</RouterLink>
+  <RouterLink v-if="!userStore.user" to="/signup">Sign Up</RouterLink>
+    </nav>
     </div>
   </header>
 <RouterView />
@@ -17,12 +22,8 @@ import { RouterLink, RouterView } from 'vue-router'
 <style scoped>
 header {
   line-height: 1.5;
+  margin-top: 90px;
   max-height: 100vh;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
 }
 
 nav {

@@ -2,10 +2,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useUserStore = defineStore('user', () => {
-  // User state (null if not logged in)
-  const user = ref(null)
 
-  // Mock login function
+  const user = ref(null)
   function login(email, password) {
     if (email === 'test@example.com' && password === 'password123') {
       user.value = {
@@ -19,12 +17,10 @@ export const useUserStore = defineStore('user', () => {
     }
     return false
   }
-
   function logout() {
     user.value = null
   }
 
- 
   function signup(email, password) {
     user.value = {
       email,
@@ -35,6 +31,5 @@ export const useUserStore = defineStore('user', () => {
     }
     return true
   }
-
   return { user, login, logout, signup }
 })

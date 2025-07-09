@@ -2,8 +2,9 @@
   <article>
     <header>
       <h2>{{ post.title }}</h2>
-      <p>by {{ post.author }}</p>
-      <p>Posted on: {{ post.date }}</p>
+      <p>by {{ post.author }} 
+        <span v-if="post.date"> | {{ post.date }}</span>
+      </p>
     </header>
     <section>
       <p>{{ post.content }}</p>
