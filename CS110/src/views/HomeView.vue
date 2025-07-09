@@ -1,9 +1,13 @@
 <script setup>
-import TheWelcome from '../components/TheWelcome.vue'
+import PostFeed from '@/components/PostFeed.vue'; 
+import Followers from '@/components/Followers.vue';
+import LoginButton from '@/components/LoginButton.vue';
 </script>
 
 <template>
   <main>
-    <TheWelcome />
+    <LoginButton/>
+    <PostFeed />
+    <Followers />
   </main>
 </template>
