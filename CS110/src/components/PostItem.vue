@@ -3,6 +3,7 @@
     <header>
       <h2>{{ post.title }}</h2>
       <p>by {{ post.author }}</p>
+      <p>Posted on: {{ post.date }}</p>
     </header>
     <section>
       <p>{{ post.content }}</p>
