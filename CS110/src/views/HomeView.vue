@@ -11,12 +11,12 @@ import LogOutButton from '@/components/LogOutButton.vue'
 const userStore = useUserStore()
 
 const publicPosts = ref([
-  { id: 1, author: 'Alice01@gmail.com', date: '2025-07-07', content: 'Hello world!' },
-  { id: 2, author: 'Bob02@gmail.com', date: '2025-07-08', content: 'This is awesome!' },
-  { id: 3, author: 'Carol03@gmail.com', date: '2025-07-09', content: 'I Love Korea!' }
+  { id: 1, author: 'Alice01@gmail.com', date: '2025-07-07', time: '12:00', content: 'Hello world!' },
+  { id: 2, author: 'Bob02@gmail.com', date: '2025-07-08', time: '13:00', content: 'This is awesome!' },
+  { id: 3, author: 'Carol03@gmail.com', date: '2025-07-09', time: '14:00', content: 'I Love Korea!' }
 ])
 const userPosts = ref([
-  { id: 4, author: userStore.user?.username || '', date: '2025-07-09', content: 'My first post!' }
+  { id: 4, author: userStore.user?.username || '', date: '2025-07-09', time: '15:00', content: 'My first post!' }
 ])
 const suggestedUsers = ref([
   { id: 1, username: 'Alice01@gmail.com' },
