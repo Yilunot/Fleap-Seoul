@@ -23,17 +23,18 @@ function submit() {
   if (text.value.trim()) {
     props.onPost(text.value);
     text.value = '';
-    nextTick(resize);      
+    nextTick(resize);          
+  }
 }
 
 function resize() {
   const el = ta.value;
   if (!el) return;
-  el.style.height = 'auto'; 
+  el.style.height = 'auto';    
   el.style.height = el.scrollHeight + 'px';
 }
 
-}
+
 nextTick(resize);
 </script>
 
@@ -41,10 +42,10 @@ nextTick(resize);
 .autosize {
   width: 100%;
   min-height: 3em;    
-  max-height: 20em;   
+  max-height: 20em;  
   overflow: hidden;   
   padding: 0.5em;
-  resize: none;     
+  resize: none;      
   font-family: inherit;
   font-size: 1em;
   line-height: 1.4;
