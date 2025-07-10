@@ -3,7 +3,7 @@
     <header>
       <h2>{{ post.title }}</h2>
       <p>by {{ post.author }} 
-        <span v-if="post.date"> | {{ post.date }}</span>
+        <span v-if="post.date"> | {{ post.date }} | {{ post.time }}</span>
       </p>
     </header>
     <section>

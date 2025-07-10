@@ -14,10 +14,10 @@ const users = [
 
 // Mock posts data
 const allPosts = [
-  { id: 1, author: 'Alice01@gmail.com', date: '2025-07-07', content: 'Hello world!' },
-  { id: 2, author: 'Bob02@gmail.com', date: '2025-07-08', content: 'This is awesome!' },
-  { id: 3, author: 'Carol03@gmail.com', date: '2025-07-09', content: 'I Love Korea!' },
-  { id: 4, author: 'Alice01@gmail.com', date: '2025-07-10', content: 'Another post by Alice.' }
+  { id: 1, author: 'Alice01@gmail.com', date: '2025-07-07', time: '10:00 AM', content: 'Hello world!' },
+  { id: 2, author: 'Bob02@gmail.com', date: '2025-07-08', time: '11:00 AM', content: 'This is awesome!' },
+  { id: 3, author: 'Carol03@gmail.com', date: '2025-07-09', time: '12:00 PM', content: 'I Love Korea!' },
+  { id: 4, author: 'Alice01@gmail.com', date: '2025-07-10', time: '01:00 PM', content: 'Another post by Alice.' }
 ]
 
 const route = useRoute()
