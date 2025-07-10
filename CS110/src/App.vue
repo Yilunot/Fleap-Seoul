@@ -12,7 +12,6 @@ const userStore = useUserStore()
   <RouterLink v-if="userStore.user" :to="`/profile/${userStore.user.username}`">Profile</RouterLink>
   <RouterLink v-if="userStore.user" to="/" @click.native="userStore.logout">Logout</RouterLink>
   <RouterLink v-else to="/login">Login</RouterLink>
-  <RouterLink v-if="!userStore.user" to="/signup">Sign Up</RouterLink>
     </nav>
     </div>
   </header>
