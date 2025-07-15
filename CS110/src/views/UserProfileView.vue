@@ -10,8 +10,8 @@
       </div>
       
       <div class="right-column">
-        <Followers :users="users.filter(u => u.id == user.id)" :canFollow="true" :onFollow="onFollow" title="Followers" />
-
+        <Followers :users="users.filter(u => u.id == user.id)" :canFollow="true" :onFollow="onFollow" title="Follow" />
+        <Followers :users="followerUsers" title="Following" />
       </div>
     </div>
   </main>
@@ -41,12 +41,10 @@ const allPosts = [
 const route = useRoute()
 const user = users.find(u => u.username === route.params.username)
 
-// Get follower user objects
 const followerUsers = user && user.followers
   ? users.filter(u => user.followers.includes(u.id))
   : []
 
-// Get posts for this user
 const userPosts = user
   ? allPosts.filter(post => post.author === user.username)
   : []
