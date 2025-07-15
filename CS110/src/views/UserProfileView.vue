@@ -1,3 +1,22 @@
+<template>
+  <main>
+    <div class="main-columns">
+      <div class="left-column">
+        <UserStats :user="user" />
+      </div>
+
+      <div class="center-column">
+        <PostFeed :posts="userPosts" />
+      </div>
+      
+      <div class="right-column">
+        <Followers :users="users.filter(u => u.id == user.id)" :canFollow="true" :onFollow="onFollow" title="Followers" />
+
+      </div>
+    </div>
+  </main>
+</template>
+
 <script setup>
 import { useRoute } from 'vue-router'
 import UserStats from '@/components/UserStats.vue'
@@ -5,11 +24,10 @@ import Followers from '@/components/Followers.vue'
 import LogOutButton from '@/components/LogOutButton.vue'
 import PostFeed from '@/components/PostFeed.vue'
 
-// Mock users data
 const users = [
   { id: 1, username: 'Alice01@gmail.com', posts: 5, following: 2, followers: [2,3] },
   { id: 2, username: 'Bob02@gmail.com', posts: 3, following: 1, followers: [1] },
-  { id: 3, username: 'Carol03@gmail.com', posts: 2, following: 0, followers: [1,2] }
+  { id: 3, username: 'Carol03@gmail.com', posts: 2, following: 0, followers: [1,2] },
 ]
 
 // Mock posts data
@@ -33,21 +51,3 @@ const userPosts = user
   ? allPosts.filter(post => post.author === user.username)
   : []
 </script>
-
-<template>
-  <main>
-    <div class="main-columns">
-      <div class="left-column">
-        <UserStats :user="user" />
-      </div>
-
-      <div class="center-column">
-        <PostFeed :posts="userPosts" />
-      </div>
-      
-      <div class="right-column">
-        <Followers :users="followerUsers" :canFollow="false" :onFollow="()=>{}" title="Followers" />
-      </div>
-    </div>
-  </main>
-</template>

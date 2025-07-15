@@ -7,6 +7,6 @@ defineProps(['user'])
     <div><strong>{{ user.username }}</strong></div>
     <div>Posts: {{ user.posts }}</div>
     <div>Following: {{ user.following }}</div>
-    <div>Followers: {{ user.followers }}</div>
+    <div>Followers: {{ user.followers.length }}</div>
   </div>
 </template>

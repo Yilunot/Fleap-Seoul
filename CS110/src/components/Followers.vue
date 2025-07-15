@@ -13,4 +13,5 @@
 
 <script setup>
 defineProps(['users', 'canFollow', 'onFollow', 'title']);
+
 </script>
