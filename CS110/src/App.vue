@@ -51,13 +51,12 @@ async function handleLogout() {
 
 <style scoped>
 .Navbar-header {
-  background-color: #333;
-  padding: 1rem;
+  background-color: #f1eed8d6;
+  padding: 10px;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
 }
 
 nav {
@@ -67,17 +66,18 @@ nav {
 }
 
 nav a {
-  color: white;
+  color: rgb(11, 11, 11);
   text-decoration: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
 }
 
 nav a:hover {
-  background-color: #555;
+  background-color: #6a6c6c;
 }
 
 nav a.router-link-active {
-  background-color: #42b983;
+  background-color: #2d2c2c;
+  color: white;
 }
 </style>

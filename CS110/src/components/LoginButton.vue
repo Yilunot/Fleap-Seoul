@@ -30,6 +30,6 @@ button {
 }
 
 button:hover {
-  background-color: #4c599d;
+  background-color: #6c7ac3;
 }
 </style>

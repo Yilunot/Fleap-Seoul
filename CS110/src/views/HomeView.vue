@@ -10,7 +10,6 @@ import CreatePost from '@/components/CreatePost.vue'
 import UserStats from '@/components/UserStats.vue'
 import LogOutButton from '@/components/LogOutButton.vue'
 
-
 const currentUser = ref(null)
 const currentUserDoc = ref(null)
 const publicPosts = ref([])
@@ -204,6 +203,7 @@ async function handleLogout() {
   <main>
     <div class="main-columns">
       <div class="left-column">
+        <!-- Display user stats from Firestore document -->
         <div v-if="currentUserDoc">
           <div><strong>{{ currentUser.username }}</strong></div>
           <div>Posts: {{ (currentUserDoc.posts || []).length }}</div>
@@ -253,7 +253,7 @@ async function handleLogout() {
     </div>
   </main>
 </template>
- 
+
 <style scoped>
 .main-columns {
   display: flex;
@@ -261,6 +261,7 @@ async function handleLogout() {
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
+  margin-top: 70px; /* Account for fixed navbar */
 }
 
 .left-column {
@@ -320,9 +321,5 @@ async function handleLogout() {
   padding: 2rem;
   background-color: #f9f9f9;
   border-radius: 8px;
-}
-
-main {
-  margin-top: 70px; /* Account for fixed navbar */
 }
 </style>
