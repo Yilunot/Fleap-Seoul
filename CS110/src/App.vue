@@ -63,7 +63,7 @@ async function handleLogout() {
 nav {
   display: flex;
   gap: 1rem;
-  justify-content: center;
+  justify-content: left;
 }
 
 nav a {
