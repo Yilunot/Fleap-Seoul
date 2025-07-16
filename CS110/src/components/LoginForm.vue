@@ -12,7 +12,6 @@ const password = ref('')
 const errorMessage = ref('')
 const isLoading = ref(false)
 
-// Function to ensure user exists in database
 async function ensureUserInDatabase(userCredential) {
   try {
     console.log('🔍 Checking if user exists in database:', userCredential.user.email)
@@ -62,8 +61,7 @@ async function handleLogin() {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value)
     console.log('✅ User logged in:', userCredential.user.email)
-    
-    // Check if user exists in database and add if not
+
     await ensureUserInDatabase(userCredential)
     
     router.push('/')
@@ -82,18 +80,15 @@ async function handleSignup() {
   try {
     console.log('🔥 Starting signup process for:', email.value)
     
-    // Create Firebase Auth user
     const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value)
     console.log('✅ Firebase Auth user created:', userCredential.user.uid)
     
-    // Ensure user exists in database
     await ensureUserInDatabase(userCredential)
     
     router.push('/')
   } catch (error) {
     console.error('❌ Signup error:', error)
-    
-    // If Firestore failed but Auth succeeded, delete the auth user
+
     if (auth.currentUser) {
       try {
         await auth.currentUser.delete()
@@ -110,7 +105,6 @@ async function handleSignup() {
 }
 </script>
 
-<!-- Template stays exactly the same -->
 <template>
   <div class="login-box">
     <div class="tabs">
@@ -151,7 +145,6 @@ async function handleSignup() {
   </div>
 </template>
 
-<!-- Styles stay exactly the same -->
 <style scoped>
 .login-box {
   max-width: 350px;

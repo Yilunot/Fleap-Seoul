@@ -4,7 +4,6 @@
     <div v-if="!users.length">No one to follow.</div>
     <ul>
       <li v-for="u in users" :key="u.id">
-        <!-- Remove router-link since profile page doesn't exist -->
         <span>{{ u.email }}</span>
         <button v-if="canFollow" @click="onFollow(u.id)">Follow</button>
       </li>

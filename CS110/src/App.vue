@@ -35,7 +35,6 @@ async function handleLogout() {
     <div class="Navbar-header">
       <nav>
         <RouterLink to="/">Home</RouterLink>
-        <!-- REMOVED PROFILE LINK -->
         <RouterLink 
           v-if="currentUser" 
           to="/" 
