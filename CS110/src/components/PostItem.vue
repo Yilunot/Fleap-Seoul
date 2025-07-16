@@ -101,7 +101,7 @@ article {
   border-radius: 5px;
   padding: 16px;
   margin-bottom: 16px;
-  background: white;
+  background: #f1eed8d6;
 }
 
 header {

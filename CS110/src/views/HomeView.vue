@@ -215,7 +215,7 @@ async function handleLogout() {
           <div>Loading...</div>
         </div>
         <div v-else>
-          <span>Not logged in</span>
+          <span>Not Logged in</span>
         </div>
         
         <LogOutButton v-if="currentUser" :logOut="handleLogout" />
@@ -266,7 +266,8 @@ async function handleLogout() {
 
 .left-column {
   flex: 0 0 250px;
-  background: #f8f9fa;
+  background: #f1eed8d6;
+  color: rgb(3, 0, 0);
   padding: 1rem;
   border-radius: 8px;
   height: fit-content;
@@ -279,7 +280,8 @@ async function handleLogout() {
 
 .right-column {
   flex: 0 0 250px;
-  background: #f8f9fa;
+  background: #f1eed8d6;
+  color: #333;
   padding: 1rem;
   border-radius: 8px;
   height: fit-content;
@@ -298,10 +300,6 @@ async function handleLogout() {
   cursor: pointer;
   width: 100%;
   font-size: 14px;
-}
-
-.toggle-btn:hover {
-  background-color: #369870;
 }
 
 .post-header {

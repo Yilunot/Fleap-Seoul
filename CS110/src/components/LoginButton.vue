@@ -21,7 +21,7 @@ const login = () => {
   margin-top: 20px;
 }
 button {
-  background-color: #0c5fe4;
+  background-color: #000000;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -30,6 +30,7 @@ button {
 }
 
 button:hover {
-  background-color: #6c7ac3;
+  background-color: #464646;
+  color: white;
 }
 </style>
