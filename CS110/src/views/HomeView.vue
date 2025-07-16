@@ -16,10 +16,15 @@ const publicPosts = ref([])
 const userPosts = ref([])
 const suggestedUsers = ref([])
 const showUserPosts = ref(false)
+const selectedUser = ref(null)
+const selectedUserPosts = ref([])
+const viewMode = ref('all') // 'all', 'user', 'selected'
 
 onMounted(() => {
+  console.log('🚀 HomeView mounted')
   onAuthStateChanged(auth, async (user) => {
     if (user) {
+      console.log('👤 User authenticated:', user.email)
       currentUser.value = {
         email: user.email,
         username: user.email.split('@')[0],
@@ -28,6 +33,7 @@ onMounted(() => {
       await loadCurrentUserDoc()
       loadUserPosts()
     } else {
+      console.log('❌ No user authenticated')
       currentUser.value = null
       currentUserDoc.value = null
     }
@@ -39,6 +45,7 @@ onMounted(() => {
 async function loadCurrentUserDoc() {
   if (!currentUser.value) return
   try {
+    console.log('🔍 Loading current user document...')
     const usersRef = collection(db, 'users')
     const q = query(usersRef, where('email', '==', currentUser.value.email))
     const querySnapshot = await getDocs(q)
@@ -49,14 +56,21 @@ async function loadCurrentUserDoc() {
         id: userDoc.id,
         ...userDoc.data()
       }
+      console.log('✅ Current user document loaded:', currentUserDoc.value)
+    } else {
+      console.log('❌ No user document found')
     }
   } catch (error) {
     console.error('Error loading current user document:', error)
   }
 }
+
 async function loadPublicPosts() {
   try {
+    console.log('🔍 Loading public posts...', currentUserDoc.value)
+    
     if (currentUserDoc.value && currentUserDoc.value.feed && currentUserDoc.value.feed.length > 0) {
+      console.log('📰 Loading from user feed:', currentUserDoc.value.feed)
       const feedPostIds = currentUserDoc.value.feed.slice(-10).reverse()
       const feedPosts = []
       
@@ -67,7 +81,9 @@ async function loadPublicPosts() {
         }
       }
       publicPosts.value = feedPosts
+      console.log('✅ Feed posts loaded:', feedPosts)
     } else {
+      console.log('📚 Loading all posts from posts collection')
       const postsRef = collection(db, 'posts')
       const q = query(postsRef, orderBy('timestamp', 'desc'), limit(10))
       const querySnapshot = await getDocs(q)
@@ -75,15 +91,17 @@ async function loadPublicPosts() {
         id: doc.id,
         ...doc.data()
       }))
+      console.log('✅ All posts loaded:', publicPosts.value)
     }
   } catch (error) {
-    console.error('Error loading public posts:', error)
+    console.error('❌ Error loading public posts:', error)
   }
 }
 
 async function loadUserPosts() {
   if (!currentUserDoc.value) return
   try {
+    console.log('🔍 Loading user posts...')
     const userPostIds = currentUserDoc.value.posts || []
     const userPostDocs = []
     
@@ -93,7 +111,9 @@ async function loadUserPosts() {
         userPostDocs.push({ id: postDoc.id, ...postDoc.data() })
       }
     }
+    
     userPosts.value = userPostDocs.sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds)
+    console.log('✅ User posts loaded:', userPosts.value)
   } catch (error) {
     console.error('Error loading user posts:', error)
   }
@@ -101,6 +121,7 @@ async function loadUserPosts() {
 
 async function loadSuggestedUsers() {
   try {
+    console.log('🔍 Loading suggested users...')
     const usersRef = collection(db, 'users')
     const querySnapshot = await getDocs(usersRef)
     
@@ -108,8 +129,12 @@ async function loadSuggestedUsers() {
       id: doc.id,
       ...doc.data()
     }))
+    
+    console.log('📋 All users from database:', allUsers)
+    
     if (currentUserDoc.value) {
       const followingIds = currentUserDoc.value.following || []
+      console.log('👥 Currently following:', followingIds)
       allUsers = allUsers.filter(user => 
         user.email !== currentUser.value?.email && 
         !followingIds.includes(user.id)
@@ -117,10 +142,39 @@ async function loadSuggestedUsers() {
     } else {
       allUsers = allUsers.filter(user => user.email !== currentUser.value?.email)
     }
+    
+    console.log('🔄 Filtered users:', allUsers)
+    
     const shuffled = allUsers.sort(() => 0.5 - Math.random())
     suggestedUsers.value = shuffled.slice(0, 5)
+    console.log('✅ Suggested users loaded:', suggestedUsers.value)
   } catch (error) {
-    console.error('Error loading suggested users:', error)
+    console.error('❌ Error loading suggested users:', error)
+  }
+}
+
+async function handleUserClick(user) {
+  try {
+    console.log('👤 Loading posts for user:', user.email)
+    selectedUser.value = user
+    viewMode.value = 'selected'
+    
+    // Load the selected user's posts
+    const userPostIds = user.posts || []
+    const userPostDocs = []
+    
+    for (const postId of userPostIds) {
+      const postDoc = await getDoc(doc(db, 'posts', postId))
+      if (postDoc.exists()) {
+        userPostDocs.push({ id: postDoc.id, ...postDoc.data() })
+      }
+    }
+    
+    // Sort by timestamp (most recent first)
+    selectedUserPosts.value = userPostDocs.sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds)
+    console.log('✅ Selected user posts loaded:', selectedUserPosts.value)
+  } catch (error) {
+    console.error('Error loading selected user posts:', error)
   }
 }
 
@@ -128,6 +182,7 @@ async function handlePost(content) {
   if (!currentUser.value || !currentUserDoc.value) return
   
   try {
+    console.log('📝 Creating new post...')
     const newPost = {
       timestamp: serverTimestamp(),
       author: currentUser.value.email,
@@ -135,10 +190,12 @@ async function handlePost(content) {
     }
     
     const postRef = await addDoc(collection(db, 'posts'), newPost)
+    console.log('✅ Post created with ID:', postRef.id)
   
     await updateDoc(doc(db, 'users', currentUserDoc.value.id), {
       posts: arrayUnion(postRef.id)
     })
+    
     const followers = currentUserDoc.value.followers || []
     for (const followerId of followers) {
       await updateDoc(doc(db, 'users', followerId), {
@@ -158,6 +215,7 @@ async function handleFollow(userId) {
   if (!currentUser.value || !currentUserDoc.value) return
   
   try {
+    console.log('👥 Following user:', userId)
     await updateDoc(doc(db, 'users', currentUserDoc.value.id), {
       following: arrayUnion(userId)
     })
@@ -185,7 +243,49 @@ async function handleFollow(userId) {
 }
 
 function togglePostView() {
-  showUserPosts.value = !showUserPosts.value
+  if (viewMode.value === 'all') {
+    viewMode.value = 'user'
+    showUserPosts.value = true
+  } else if (viewMode.value === 'user') {
+    viewMode.value = 'all'
+    showUserPosts.value = false
+    selectedUser.value = null
+  } else {
+    // From selected user back to all posts
+    viewMode.value = 'all'
+    showUserPosts.value = false
+    selectedUser.value = null
+  }
+}
+
+function getCurrentPosts() {
+  if (viewMode.value === 'selected') {
+    return selectedUserPosts.value
+  } else if (viewMode.value === 'user') {
+    return userPosts.value
+  } else {
+    return publicPosts.value
+  }
+}
+
+function getHeaderText() {
+  if (viewMode.value === 'selected') {
+    return `${selectedUser.value.email}'s Posts`
+  } else if (viewMode.value === 'user') {
+    return 'Your Posts'
+  } else {
+    return currentUser.value ? 'Your Feed' : 'All Posts'
+  }
+}
+
+function getToggleButtonText() {
+  if (viewMode.value === 'selected') {
+    return 'Back to All Posts'
+  } else if (viewMode.value === 'user') {
+    return 'Show All Posts'
+  } else {
+    return 'Show My Posts'
+  }
 }
 
 async function handleLogout() {
@@ -223,7 +323,7 @@ async function handleLogout() {
         
         <div v-if="currentUser" class="toggle-section">
           <button @click="togglePostView" class="toggle-btn">
-            {{ showUserPosts ? 'Show All Posts' : 'Show My Posts' }}
+            {{ getToggleButtonText() }}
           </button>
         </div>
       </div>
@@ -232,13 +332,17 @@ async function handleLogout() {
         <CreatePost v-if="currentUser" :onPost="handlePost" />
         
         <div class="post-header">
-          <h2>{{ showUserPosts ? 'Your Posts' : (currentUser ? 'Your Feed' : 'All Posts') }}</h2>
+          <h2>{{ getHeaderText() }}</h2>
         </div>
         
-        <PostFeed :posts="showUserPosts ? userPosts : publicPosts" />
+        <PostFeed :posts="getCurrentPosts()" />
         
-        <div v-if="showUserPosts && userPosts.length === 0" class="no-posts">
+        <div v-if="viewMode === 'user' && userPosts.length === 0" class="no-posts">
           <p>You have no posts yet. Create your first post!</p>
+        </div>
+        
+        <div v-if="viewMode === 'selected' && selectedUserPosts.length === 0" class="no-posts">
+          <p>{{ selectedUser.email }} has no posts yet.</p>
         </div>
       </div>
 
@@ -247,6 +351,7 @@ async function handleLogout() {
           :users="suggestedUsers"
           :canFollow="!!currentUser"
           :onFollow="handleFollow"
+          :onUserClick="handleUserClick"
           title="Suggested Users"
         />
       </div>
@@ -300,6 +405,10 @@ async function handleLogout() {
   cursor: pointer;
   width: 100%;
   font-size: 14px;
+}
+
+.toggle-btn:hover {
+  background-color: #369870;
 }
 
 .post-header {
