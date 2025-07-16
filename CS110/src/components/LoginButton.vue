@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
+import { useRouter } from 'vue-router'
 
 const router = useRouter();
 
@@ -15,7 +15,6 @@ const login = () => {
 </script>
 
 <style scoped>
-
 .login-button {
   display: flex;
   justify-content: left;
@@ -29,7 +28,6 @@ button {
   border-radius: 5px;
   cursor: pointer;
 }
-
 
 button:hover {
   background-color: #4c599d;

@@ -1,57 +1,84 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import { useUserStore } from './stores/user.js'
-const userStore = useUserStore()
+import { auth } from './firebaseResources'
+import { ref, onMounted } from 'vue'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
+
+const currentUser = ref(null)
+
+onMounted(() => {
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentUser.value = {
+        email: user.email,
+        username: user.email.split('@')[0],
+        uid: user.uid
+      }
+    } else {
+      currentUser.value = null
+    }
+  })
+})
+
+async function handleLogout() {
+  try {
+    await signOut(auth)
+    currentUser.value = null
+  } catch (error) {
+    console.error('Logout failed:', error)
+  }
+}
 </script>
 
 <template>
   <header>
     <div class="Navbar-header">
-     <nav>
-  <RouterLink to="/">Home</RouterLink>
-  <RouterLink v-if="userStore.user" :to="`/profile/${userStore.user.username}`">Profile</RouterLink>
-  <RouterLink v-if="userStore.user" to="/" @click.native="userStore.logout">Logout</RouterLink>
-  <RouterLink v-else to="/login">Login</RouterLink>
-    </nav>
+      <nav>
+        <RouterLink to="/">Home</RouterLink>
+        <!-- REMOVED PROFILE LINK -->
+        <RouterLink 
+          v-if="currentUser" 
+          to="/" 
+          @click="handleLogout"
+        >
+          Logout
+        </RouterLink>
+        <RouterLink v-else to="/login">Login</RouterLink>
+      </nav>
     </div>
   </header>
-<RouterView />
+  <RouterView />
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-  margin-top: 90px;
-  max-height: 100vh;
+.Navbar-header {
+  background-color: #333;
+  padding: 1rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
 nav {
-  width: 100%;
-  font-size: 20px;
-  position: fixed;
-  top: 0;
-  left: 1;
-  right: 0;
-  background-color: rgb(7, 7, 7);
-
-}
-
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
 }
 
 nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
 }
 
-nav a:first-of-type {
-  border: 0;
+nav a:hover {
+  background-color: #555;
 }
 
+nav a.router-link-active {
+  background-color: #42b983;
+}
 </style>
