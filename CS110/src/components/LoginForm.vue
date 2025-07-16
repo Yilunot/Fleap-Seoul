@@ -181,7 +181,7 @@ async function handleSignup() {
 }
 
 .tabs button.active {
-  background: #0524d1;
+  background: #000000;
   color: #fff;
 }
 
@@ -212,7 +212,7 @@ button {
   padding: 0.8rem;
   border-radius: 4px;
   border: none;
-  background: #2b01e4;
+  background: #000000;
   color: #fff;
   cursor: pointer;
   font-size: 1rem;
@@ -220,7 +220,8 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background: #0524d1;
+  background: #59595c;
+  color: #fff;
 }
 
 button:disabled {
