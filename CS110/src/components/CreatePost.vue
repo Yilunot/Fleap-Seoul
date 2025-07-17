@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h3>Create Post</h3>
+    <h3 class ="CreatePost">Create Post</h3>
     <textarea
       ref="ta"
       v-model="text"
@@ -54,5 +54,10 @@ nextTick(resize);
 }
 button {
   margin-top: 0.5em;
+}
+.CreatePost {
+  margin-bottom: 0.5em;
+  font-size: 1.2em;
+  color: #333;
 }
 </style>

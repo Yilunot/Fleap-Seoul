@@ -25,7 +25,6 @@ defineProps(['users', 'canFollow', 'onFollow', 'onUserClick', 'title']);
 
 function navigateToProfile(user) {
   console.log('Navigating to profile for user:', user.id)
-  // Navigate to user profile route with user ID
   router.push(`/user/${user.id}`)
 }
 </script>
@@ -54,7 +53,7 @@ li:hover {
 
 .user-link {
   cursor: pointer;
-  color: #4299e1;
+  color: #000102;
   transition: all 0.2s ease;
   flex-grow: 1;
   padding: 0.5rem;
@@ -69,7 +68,7 @@ li:hover {
 }
 
 button {
-  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  background: linear-gradient(135deg, #000000 0%, #3182ce 100%);
   color: white;
   border: none;
   padding: 6px 12px;

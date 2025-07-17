@@ -303,7 +303,6 @@ async function handleLogout() {
   <main>
     <div class="main-columns">
       <div class="left-column">
-        <!-- Display user stats from Firestore document -->
         <div v-if="currentUserDoc">
           <div><strong>{{ currentUser.username }}</strong></div>
           <div>Posts: {{ (currentUserDoc.posts || []).length }}</div>
@@ -366,7 +365,7 @@ async function handleLogout() {
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-  margin-top: 70px; /* Account for fixed navbar */
+  margin-top: 70px;
 }
 
 .left-column {
@@ -405,10 +404,6 @@ async function handleLogout() {
   cursor: pointer;
   width: 100%;
   font-size: 14px;
-}
-
-.toggle-btn:hover {
-  background-color: #369870;
 }
 
 .post-header {
