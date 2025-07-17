@@ -5,7 +5,6 @@ import { auth, db } from '../firebaseResources'
 import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import PostFeed from '@/components/PostFeed.vue'
-import CreatePost from '@/components/CreatePost.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -18,7 +17,7 @@ const canFollow = ref(false)
 const isFollowing = ref(false)
 
 onMounted(async () => {
-  // Check authentication state
+  
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       currentUser.value = {
@@ -66,15 +65,11 @@ async function loadUserProfile() {
         id: userDoc.id,
         ...userDoc.data()
       }
-      
-      // Check if current user can follow this user and if already following
       if (currentUserDoc.value && currentUserDoc.value.id !== profileUser.value.id) {
         canFollow.value = true
         const followingIds = currentUserDoc.value.following || []
         isFollowing.value = followingIds.includes(profileUser.value.id)
       }
-      
-      // Load user's posts
       const userPostIds = profileUser.value.posts || []
       const userPostDocs = []
       
@@ -103,17 +98,14 @@ async function handleFollow() {
   try {
     console.log('Following user:', profileUser.value.id)
     
-    // Update current user's following array
     await updateDoc(doc(db, 'users', currentUserDoc.value.id), {
       following: arrayUnion(profileUser.value.id)
     })
-    
-    // Update target user's followers array
+   
     await updateDoc(doc(db, 'users', profileUser.value.id), {
       followers: arrayUnion(currentUserDoc.value.id)
     })
     
-    // Add target user's posts to current user's feed
     const targetUserPosts = profileUser.value.posts || []
     if (targetUserPosts.length > 0) {
       await updateDoc(doc(db, 'users', currentUserDoc.value.id), {
@@ -121,10 +113,8 @@ async function handleFollow() {
       })
     }
     
-    // Update local state
     isFollowing.value = true
     
-    // Reload data
     await loadCurrentUserDoc()
     
   } catch (error) {
@@ -144,7 +134,6 @@ function goBack() {
     </div>
     
     <div v-else-if="profileUser" class="main-columns">
-      <!-- Left Column - Profile User Stats -->
       <div class="left-column">
         <div class="user-profile">
           <div class="profile-info">
@@ -153,8 +142,6 @@ function goBack() {
             <div class="stat-item">Following: {{ (profileUser.following || []).length }}</div>
             <div class="stat-item">Followers: {{ (profileUser.followers || []).length }}</div>
           </div>
-          
-          <!-- Follow/Back Actions -->
           <div class="action-section">
             <button v-if="canFollow && !isFollowing" @click="handleFollow" class="follow-btn">
               Follow {{ profileUser.email.split('@')[0] }}
@@ -211,7 +198,7 @@ function goBack() {
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-  margin-top: 70px; /* Account for fixed navbar */
+  margin-top: 70px;
 }
 
 .left-column {
