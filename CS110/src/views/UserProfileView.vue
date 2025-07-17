@@ -1,18 +1,58 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { db } from '../firebaseResources'
-import { doc, getDoc } from 'firebase/firestore'
+import { useRoute, useRouter } from 'vue-router'
+import { auth, db } from '../firebaseResources'
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore'
+import { onAuthStateChanged } from 'firebase/auth'
 import PostFeed from '@/components/PostFeed.vue'
+import CreatePost from '@/components/CreatePost.vue'
 
 const route = useRoute()
+const router = useRouter()
 const profileUser = ref(null)
 const profileUserPosts = ref([])
+const currentUser = ref(null)
+const currentUserDoc = ref(null)
 const loading = ref(true)
+const canFollow = ref(false)
+const isFollowing = ref(false)
 
 onMounted(async () => {
-  await loadUserProfile()
+  // Check authentication state
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser.value = {
+        email: user.email,
+        username: user.email.split('@')[0],
+        uid: user.uid
+      }
+      await loadCurrentUserDoc()
+    } else {
+      currentUser.value = null
+      currentUserDoc.value = null
+    }
+    await loadUserProfile()
+  })
 })
+
+async function loadCurrentUserDoc() {
+  if (!currentUser.value) return
+  try {
+    const usersRef = collection(db, 'users')
+    const q = query(usersRef, where('email', '==', currentUser.value.email))
+    const querySnapshot = await getDocs(q)
+    
+    if (!querySnapshot.empty) {
+      const userDoc = querySnapshot.docs[0]
+      currentUserDoc.value = {
+        id: userDoc.id,
+        ...userDoc.data()
+      }
+    }
+  } catch (error) {
+    console.error('Error loading current user document:', error)
+  }
+}
 
 async function loadUserProfile() {
   try {
@@ -27,6 +67,14 @@ async function loadUserProfile() {
         ...userDoc.data()
       }
       
+      // Check if current user can follow this user and if already following
+      if (currentUserDoc.value && currentUserDoc.value.id !== profileUser.value.id) {
+        canFollow.value = true
+        const followingIds = currentUserDoc.value.following || []
+        isFollowing.value = followingIds.includes(profileUser.value.id)
+      }
+      
+      // Load user's posts
       const userPostIds = profileUser.value.posts || []
       const userPostDocs = []
       
@@ -48,159 +96,291 @@ async function loadUserProfile() {
     loading.value = false
   }
 }
+
+async function handleFollow() {
+  if (!currentUser.value || !currentUserDoc.value || !profileUser.value) return
+  
+  try {
+    console.log('Following user:', profileUser.value.id)
+    
+    // Update current user's following array
+    await updateDoc(doc(db, 'users', currentUserDoc.value.id), {
+      following: arrayUnion(profileUser.value.id)
+    })
+    
+    // Update target user's followers array
+    await updateDoc(doc(db, 'users', profileUser.value.id), {
+      followers: arrayUnion(currentUserDoc.value.id)
+    })
+    
+    // Add target user's posts to current user's feed
+    const targetUserPosts = profileUser.value.posts || []
+    if (targetUserPosts.length > 0) {
+      await updateDoc(doc(db, 'users', currentUserDoc.value.id), {
+        feed: arrayUnion(...targetUserPosts)
+      })
+    }
+    
+    // Update local state
+    isFollowing.value = true
+    
+    // Reload data
+    await loadCurrentUserDoc()
+    
+  } catch (error) {
+    console.error('Error following user:', error)
+  }
+}
+
+function goBack() {
+  router.push('/')
+}
 </script>
 
 <template>
   <main>
-    <div class="profile-container">
-      <div v-if="loading" class="loading">
-        Loading user profile...
-      </div>
-      
-      <div v-else-if="profileUser" class="profile-content">
-        <div class="profile-header">
-          <h1>{{ profileUser.email }}</h1>
-          <div class="profile-stats">
-            <div class="stat">
-              <strong>{{ (profileUser.posts || []).length }}</strong>
-              <span>Posts</span>
-            </div>
-            <div class="stat">
-              <strong>{{ (profileUser.following || []).length }}</strong>
-              <span>Following</span>
-            </div>
-            <div class="stat">
-              <strong>{{ (profileUser.followers || []).length }}</strong>
-              <span>Followers</span>
-            </div>
+    <div v-if="loading" class="loading">
+      Loading user profile...
+    </div>
+    
+    <div v-else-if="profileUser" class="main-columns">
+      <!-- Left Column - Profile User Stats -->
+      <div class="left-column">
+        <div class="user-profile">
+          <div class="profile-info">
+            <div class="username"><strong>{{ profileUser.email }}</strong></div>
+            <div class="stat-item">Posts: {{ (profileUser.posts || []).length }}</div>
+            <div class="stat-item">Following: {{ (profileUser.following || []).length }}</div>
+            <div class="stat-item">Followers: {{ (profileUser.followers || []).length }}</div>
           </div>
+          
+          <!-- Follow/Back Actions -->
+          <div class="action-section">
+            <button v-if="canFollow && !isFollowing" @click="handleFollow" class="follow-btn">
+              Follow {{ profileUser.email.split('@')[0] }}
+            </button>
+            <div v-else-if="isFollowing" class="following-indicator">
+              ✓ Following
+            </div>
+            <button @click="goBack" class="back-btn">
+              ← Back to Home
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="center-column">
+        <div class="post-header">
+          <h2>{{ profileUser.email }}'s Posts</h2>
+          <p class="profile-subtitle">{{ profileUserPosts.length }} post{{ profileUserPosts.length !== 1 ? 's' : '' }}</p>
         </div>
         
-        <div class="profile-posts">
-          <h2>Posts by {{ profileUser.email }}</h2>
-          <PostFeed :posts="profileUserPosts" />
-          
-          <div v-if="profileUserPosts.length === 0" class="no-posts">
-            <p>This user has no posts yet.</p>
-          </div>
+        <PostFeed :posts="profileUserPosts" />
+        
+        <div v-if="profileUserPosts.length === 0" class="no-posts">
+          <p>{{ profileUser.email }} hasn't posted anything yet.</p>
         </div>
       </div>
-      
-      <div v-else class="error">
-        <p>User not found</p>
+
+      <div class="right-column">
+        <h3>{{ profileUser.email }}</h3>
       </div>
+    </div>
+
+    <div v-else class="error">
+      <p>User not found</p>
+      <button @click="goBack" class="back-btn">
+        ← Back to Home
+      </button>
     </div>
   </main>
 </template>
 
 <style scoped>
-.profile-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-  margin-top: 70px;
-}
-
 .loading, .error {
   text-align: center;
   padding: 2rem;
   color: #666;
   font-size: 1.2rem;
+  margin-top: 70px;
 }
 
-.profile-header {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+.main-columns {
+  display: flex;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 2rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 70px; /* Account for fixed navbar */
 }
 
-.profile-header h1 {
-  margin: 0 0 1.5rem 0;
-  color: #333;
-  font-size: 2rem;
-  font-weight: 600;
-}
-
-.profile-stats {
-  display: flex;
-  justify-content: center;
-  gap: 3rem;
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.left-column {
+  flex: 0 0 250px;
+  background: #f1eed8d6;
+  color: rgb(3, 0, 0);
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.7);
   border-radius: 8px;
-  min-width: 80px;
+  height: fit-content;
 }
 
-.stat strong {
-  font-size: 2rem;
-  color: #2c3e50;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
+.center-column {
+  flex: 1;
+  min-width: 0;
 }
 
-.stat span {
+.right-column {
+  flex: 0 0 250px;
+  background: #f1eed8d6;
+  color: #333;
+  padding: 1rem;
+  border-radius: 8px;
+  height: fit-content;
+}
+
+.user-profile {
+  text-align: center;
+}
+
+.profile-info {
+  margin-bottom: 1rem;
+}
+
+.username {
+  font-size: 1.1em;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.stat-item {
+  margin: 0.25rem 0;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.action-section {
+  margin-top: 1rem;
+}
+
+.follow-btn {
+  background-color: #42b983;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 14px;
+  margin-bottom: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.follow-btn:hover {
+  background-color: #369870;
+}
+
+.following-indicator {
+  background-color: #28a745;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+  width: 100%;
+  font-size: 14px;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+.back-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.back-btn:hover {
+  background-color: #5a6268;
+}
+
+.post-header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.post-header h2 {
+  color: #333;
+  margin: 0 0 0.5rem 0;
+}
+
+.profile-subtitle {
   color: #666;
   font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.profile-posts {
-  background: #fff;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.profile-posts h2 {
-  color: #333;
-  margin: 0 0 1.5rem 0;
-  font-size: 1.5rem;
-  text-align: center;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #e9ecef;
+  margin: 0;
 }
 
 .no-posts {
   text-align: center;
   color: #666;
-  padding: 3rem 2rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
   margin-top: 2rem;
+  padding: 2rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
 }
 
-.no-posts p {
-  margin: 0;
-  font-size: 1.1rem;
-  font-style: italic;
+.current-user-info h3 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.stats-content {
+  text-align: center;
+}
+
+.loading-state {
+  text-align: center;
+  color: #666;
+}
+
+.login-prompt {
+  text-align: center;
+}
+
+.login-prompt p {
+  color: #666;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.login-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.login-btn:hover {
+  background-color: #0056b3;
 }
 
 @media (max-width: 768px) {
-  .profile-stats {
-    gap: 1.5rem;
+  .main-columns {
+    flex-direction: column;
+    gap: 1rem;
   }
   
-  .stat {
-    min-width: 60px;
-    padding: 0.75rem;
-  }
-  
-  .stat strong {
-    font-size: 1.5rem;
-  }
-  
-  .profile-header h1 {
-    font-size: 1.5rem;
+  .left-column,
+  .right-column {
+    flex: none;
   }
 }
 </style>
