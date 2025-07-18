@@ -395,17 +395,6 @@ async function handleLogout() {
   margin-top: 1rem;
 }
 
-.toggle-btn {
-  background-color: #42b983;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  width: 100%;
-  font-size: 14px;
-}
-
 .post-header {
   text-align: center;
   margin-bottom: 1rem;
