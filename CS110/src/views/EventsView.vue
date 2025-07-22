@@ -1,11 +1,11 @@
 <template>
   <div class="events-view">
-    <EventTimeline />
+    <EventTimeLine />
   </div>
 </template>
 
 <script setup>
-import EventTimeline from '../components/EventTimeLine.vue'
+import EventTimeLine from '../components/EventTimeLine.vue'
 </script>
 
 <style scoped>
