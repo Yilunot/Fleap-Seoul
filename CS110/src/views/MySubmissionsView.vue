@@ -4,6 +4,11 @@
     
     <div v-if="loading" class="loading">Loading your submissions...</div>
     
+    <div v-else-if="!currentUser" class="error-state">
+      <p>Please log in to view your submissions.</p>
+      <RouterLink to="/login">Go to Login</RouterLink>
+    </div>
+    
     <div v-else-if="submissions.length === 0" class="empty-state">
       <p>You haven't submitted any events yet.</p>
       <RouterLink to="/events" class="submit-link">Submit your first event</RouterLink>
@@ -49,7 +54,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from '../firebaseResources'
 
@@ -63,20 +68,23 @@ onMounted(async () => {
       currentUser.value = user
       await loadSubmissions()
     } else {
+      currentUser.value = null
       loading.value = false
     }
   })
 })
 
 async function loadSubmissions() {
-  if (!currentUser.value) return
+  if (!currentUser.value) {
+    loading.value = false
+    return
+  }
   
   try {
     const submissionsRef = collection(db, 'eventSubmissions')
     const q = query(
       submissionsRef, 
-      where('submittedBy', '==', currentUser.value.uid),
-      orderBy('submittedAt', 'desc')
+      where('submittedBy', '==', currentUser.value.uid)
     )
     
     const snapshot = await getDocs(q)
@@ -84,6 +92,14 @@ async function loadSubmissions() {
       id: doc.id,
       ...doc.data()
     }))
+    
+    // Sort by submission date (newest first)
+    submissions.value.sort((a, b) => {
+      const aTime = a.submittedAt?.seconds || 0
+      const bTime = b.submittedAt?.seconds || 0
+      return bTime - aTime
+    })
+    
   } catch (error) {
     console.error('Error loading submissions:', error)
   } finally {
@@ -116,7 +132,7 @@ function formatDate(timestamp) {
   padding-top: 80px;
 }
 
-.loading, .empty-state {
+.loading, .empty-state, .error-state {
   text-align: center;
   padding: 40px;
   color: #666;
@@ -159,7 +175,7 @@ function formatDate(timestamp) {
 
 .submission-header {
   display: flex;
-  justify-content: between;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
 }
