@@ -1,29 +1,42 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import { auth } from './firebaseResources'
+import { auth, db } from './firebaseResources'
 import { ref, onMounted } from 'vue'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { doc, getDoc } from 'firebase/firestore'
 
 const currentUser = ref(null)
+const isAdmin = ref(false)
 
 onMounted(() => {
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
-      currentUser.value = {
-        email: user.email,
-        username: user.email.split('@')[0],
-        uid: user.uid
-      }
+      currentUser.value = user
+      await checkAdminStatus(user.uid)
     } else {
       currentUser.value = null
+      isAdmin.value = false
     }
   })
 })
+
+async function checkAdminStatus(uid) {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', uid))
+    if (userDoc.exists()) {
+      isAdmin.value = userDoc.data().isAdmin === true
+    }
+  } catch (error) {
+    console.error('Error checking admin status:', error)
+    isAdmin.value = false
+  }
+}
 
 async function handleLogout() {
   try {
     await signOut(auth)
     currentUser.value = null
+    isAdmin.value = false
   } catch (error) {
     console.error('Logout failed:', error)
   }
@@ -45,6 +58,7 @@ async function handleLogout() {
         <RouterLink v-else to="/login">Login</RouterLink>
         <RouterLink to="/events">Historical Events</RouterLink>
         <RouterLink v-if="currentUser" to="/my-submissions">My Submissions</RouterLink>
+        <RouterLink v-if="isAdmin" to="/admin" class="admin-link">Admin Panel</RouterLink>
       </nav>
     </div>
   </header>
@@ -64,22 +78,28 @@ async function handleLogout() {
 nav {
   display: flex;
   gap: 1rem;
-  justify-content: left;
 }
 
 nav a {
-  color: rgb(11, 11, 11);
+  color: #333;
   text-decoration: none;
-  padding: 0.5rem 1rem;
+  padding: 8px 16px;
   border-radius: 4px;
+  transition: background-color 0.2s;
 }
 
-nav a:hover {
-  background-color: #6a6c6c;
-}
-
+nav a:hover,
 nav a.router-link-active {
-  background-color: #2d2c2c;
+  background-color: #007bff;
   color: white;
+}
+
+.admin-link {
+  background-color: #dc3545;
+  color: white !important;
+}
+
+.admin-link:hover {
+  background-color: #c82333 !important;
 }
 </style>

@@ -29,7 +29,13 @@ const router = createRouter({
       name: 'my-submissions',
       component: () => import('../views/MySubmissionsView.vue'),
       meta: { requiresAuth: true }
-    }
+    },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../views/AdminView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
   ],
 })
 
