@@ -44,6 +44,7 @@ async function handleLogout() {
         </RouterLink>
         <RouterLink v-else to="/login">Login</RouterLink>
         <RouterLink to="/events">Historical Events</RouterLink>
+        <RouterLink v-if="currentUser" to="/my-submissions">My Submissions</RouterLink>
       </nav>
     </div>
   </header>

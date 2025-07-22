@@ -24,6 +24,12 @@ const router = createRouter({
       name: 'events',
       component: () => import('../views/EventsView.vue')
     },
+    {
+      path: '/my-submissions',
+      name: 'my-submissions',
+      component: () => import('../views/MySubmissionsView.vue'),
+      meta: { requiresAuth: true }
+    }
   ],
 })
 

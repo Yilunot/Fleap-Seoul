@@ -2,6 +2,11 @@
   <div class="timeline-container">
     <h2>Historical Events Timeline</h2>
     
+    <!-- Add submission form for logged-in users -->
+    <div v-if="currentUser" class="submission-section">
+      <EventSubmissionForm />
+    </div>
+    
     <div v-if="loading" class="loading">Loading events...</div>
     
     <div v-else class="timeline">
@@ -9,6 +14,7 @@
         <div class="event-year">{{ event.year }}</div>
         <div class="event-content">
           <h3>{{ event.title }}</h3>
+          <p class="event-date" v-if="event.date">{{ event.date }}</p>
           <p>{{ event.description }}</p>
           <small>Source: {{ event.source }}</small>
         </div>
@@ -24,16 +30,24 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { collection, getDocs, orderBy, query } from 'firebase/firestore'
-import { db } from '../firebaseResources'
+import { onAuthStateChanged } from 'firebase/auth'
+import { auth, db } from '../firebaseResources'
+import EventSubmissionForm from './EventSubmissionForm.vue'
 
 const events = ref([])
 const loading = ref(true)
+const currentUser = ref(null)
 
 const sortedEvents = computed(() => {
   return events.value.sort((a, b) => b.year - a.year)
 })
 
 onMounted(async () => {
+  // Check auth state
+  onAuthStateChanged(auth, (user) => {
+    currentUser.value = user
+  })
+  
   await loadEvents()
 })
 
@@ -60,6 +74,11 @@ async function loadEvents() {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
+  padding-top: 80px; /* Account for fixed header */
+}
+
+.submission-section {
+  margin-bottom: 40px;
 }
 
 .event-item {
@@ -82,6 +101,12 @@ async function loadEvents() {
 .event-content h3 {
   margin: 0 0 10px 0;
   color: #333;
+}
+
+.event-date {
+  font-style: italic;
+  color: #666;
+  margin: 0 0 10px 0;
 }
 
 .event-content p {

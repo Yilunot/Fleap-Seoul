@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import EventTimeline from '../components/EventTimeline.vue'
+import EventTimeline from '../components/EventTimeLine.vue'
 </script>
 
 <style scoped>
