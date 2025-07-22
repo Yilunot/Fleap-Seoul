@@ -43,6 +43,7 @@ async function handleLogout() {
           Logout
         </RouterLink>
         <RouterLink v-else to="/login">Login</RouterLink>
+        <RouterLink to="/events">Historical Events</RouterLink>
       </nav>
     </div>
   </header>
