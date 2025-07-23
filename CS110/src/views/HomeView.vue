@@ -626,6 +626,9 @@ async function handleLogout() {
   line-height: 1.4;
   margin: 0;
 }
+ h2 {
+    color: black;
+  }
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {

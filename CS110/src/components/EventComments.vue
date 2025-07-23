@@ -3,7 +3,6 @@
     <h3>Modern Interpretations & Discussion</h3>
     <p class="comments-subtitle">Share your thoughts about this historical event</p>
     
-    <!-- Add Comment Form -->
     <div v-if="currentUser" class="add-comment-form">
       <div class="comment-input-container">
         <textarea 
@@ -26,7 +25,6 @@
       <p>Please <RouterLink to="/login">log in</RouterLink> to join the discussion.</p>
     </div>
     
-    <!-- Comments List -->
     <div v-if="loading" class="loading">Loading comments...</div>
     
     <div v-else-if="comments.length === 0" class="no-comments">
@@ -47,8 +45,7 @@
         <div class="comment-content">
           <p>{{ comment.content }}</p>
         </div>
-        
-        <!-- Comment Reactions -->
+    
         <div class="comment-reactions">
           <button 
             @click="handleCommentLike(comment)"
@@ -67,8 +64,6 @@
           >
             👎 {{ getCommentDislikeCount(comment.id) }}
           </button>
-          
-          <!-- Delete button for comment author -->
           <button 
             v-if="currentUser && comment.userId === currentUser.uid"
             @click="deleteComment(comment.id)"
@@ -77,13 +72,15 @@
             🗑️ Delete
           </button>
         </div>
+        <div v-if="!currentUser" class="login-prompt-small">
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { collection, query, getDocs, addDoc, deleteDoc, doc, where } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from '../firebaseResources'
@@ -101,6 +98,14 @@ const loading = ref(true)
 const currentUser = ref(null)
 const newComment = ref('')
 const isSubmitting = ref(false)
+
+// Watch for auth state changes
+watch(currentUser, (newUser) => {
+  if (!newUser) {
+    // User logged out - reload reactions to clear user-specific state
+    loadCommentReactions()
+  }
+})
 
 const sortedComments = computed(() => {
   return comments.value.sort((a, b) => {
@@ -151,6 +156,7 @@ async function loadCommentReactions() {
     }))
   } catch (error) {
     console.error('Error loading comment reactions:', error)
+    commentReactions.value = []
   }
 }
 
@@ -200,51 +206,65 @@ async function deleteComment(commentId) {
 }
 
 async function handleCommentLike(comment) {
-  if (!currentUser.value) return
+  if (!currentUser.value) {
+    alert('Please log in to react to comments')
+    return
+  }
   
   const existingReaction = commentReactions.value.find(r => 
     r.commentId === comment.id && r.userId === currentUser.value.uid
   )
   
-  if (existingReaction) {
-    if (existingReaction.type === 'like') {
-      // Remove like
-      await deleteDoc(doc(db, 'eventCommentReactions', existingReaction.id))
+  try {
+    if (existingReaction) {
+      if (existingReaction.type === 'like') {
+        // Remove like
+        await deleteDoc(doc(db, 'eventCommentReactions', existingReaction.id))
+      } else {
+        // Change dislike to like - remove old reaction first
+        await deleteDoc(doc(db, 'eventCommentReactions', existingReaction.id))
+        await addCommentReaction(comment.id, 'like')
+      }
     } else {
-      // Change dislike to like
-      await deleteDoc(doc(db, 'eventCommentReactions', existingReaction.id))
+      // Add new like
       await addCommentReaction(comment.id, 'like')
     }
-  } else {
-    // Add new like
-    await addCommentReaction(comment.id, 'like')
+    
+    await loadCommentReactions()
+  } catch (error) {
+    console.error('Error handling like:', error)
   }
-  
-  await loadCommentReactions()
 }
 
 async function handleCommentDislike(comment) {
-  if (!currentUser.value) return
+  if (!currentUser.value) {
+    alert('Please log in to react to comments')
+    return
+  }
   
   const existingReaction = commentReactions.value.find(r => 
     r.commentId === comment.id && r.userId === currentUser.value.uid
   )
   
-  if (existingReaction) {
-    if (existingReaction.type === 'dislike') {
-      // Remove dislike
-      await deleteDoc(doc(db, 'eventCommentReactions', existingReaction.id))
+  try {
+    if (existingReaction) {
+      if (existingReaction.type === 'dislike') {
+        // Remove dislike
+        await deleteDoc(doc(db, 'eventCommentReactions', existingReaction.id))
+      } else {
+        // Change like to dislike - remove old reaction first
+        await deleteDoc(doc(db, 'eventCommentReactions', existingReaction.id))
+        await addCommentReaction(comment.id, 'dislike')
+      }
     } else {
-      // Change like to dislike
-      await deleteDoc(doc(db, 'eventCommentReactions', existingReaction.id))
+      // Add new dislike
       await addCommentReaction(comment.id, 'dislike')
     }
-  } else {
-    // Add new dislike
-    await addCommentReaction(comment.id, 'dislike')
+    
+    await loadCommentReactions()
+  } catch (error) {
+    console.error('Error handling dislike:', error)
   }
-  
-  await loadCommentReactions()
 }
 
 async function addCommentReaction(commentId, type) {
@@ -473,5 +493,18 @@ function formatDate(timestamp) {
 
 .delete-btn:hover {
   background: #c82333;
+}
+
+.login-prompt-small {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.login-prompt-small small {
+  color: #6c757d;
+  font-style: italic;
 }
 </style>

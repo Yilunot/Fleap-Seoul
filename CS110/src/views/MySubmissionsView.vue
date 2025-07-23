@@ -130,6 +130,7 @@ function formatDate(timestamp) {
   margin: 0 auto;
   padding: 20px;
   padding-top: 80px;
+  color: black;
 }
 
 .loading, .empty-state, .error-state {
