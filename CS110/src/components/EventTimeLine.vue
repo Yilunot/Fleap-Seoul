@@ -2,11 +2,6 @@
   <div class="timeline-container">
     <h2>Historical Events Timeline</h2>
     
-    <!-- Add submission form for logged-in users -->
-    <div v-if="currentUser" class="submission-section">
-      <EventSubmissionForm />
-    </div>
-    
     <div v-if="loading" class="loading">Loading events...</div>
     
     <div v-else class="timeline">
@@ -31,34 +26,34 @@
         </div>
       </div>
     </div>
-    
+    <div v-if="activeTab === 'timeline'" class="timeline-tab">
+      <EventTimeLine @switchToSubmit="handleSwitchToSubmit" />
+    </div>
     <div v-if="!loading && events.length === 0" class="empty-state">
-      No historical events yet. Be the first to submit one!
+      <h3>No Historical Events Yet</h3>
+      <p>Be the first to submit a historical event!</p>
+      <button @click="$emit('switchToSubmit')" class="submit-first-btn">
+        Submit First Event
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, defineEmits } from 'vue'
 import { collection, getDocs, orderBy, query } from 'firebase/firestore'
-import { onAuthStateChanged } from 'firebase/auth'
-import { auth, db } from '../firebaseResources'
-import EventSubmissionForm from './EventSubmissionForm.vue'
+import { db } from '../firebaseResources'
+
+const emit = defineEmits(['switchToSubmit'])
 
 const events = ref([])
 const loading = ref(true)
-const currentUser = ref(null)
 
 const sortedEvents = computed(() => {
   return events.value.sort((a, b) => b.year - a.year)
 })
 
 onMounted(async () => {
-  // Check auth state
-  onAuthStateChanged(auth, (user) => {
-    currentUser.value = user
-  })
-  
   await loadEvents()
 })
 
@@ -85,11 +80,6 @@ async function loadEvents() {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  padding-top: 80px;
-}
-
-.submission-section {
-  margin-bottom: 40px;
 }
 
 .event-item {
@@ -162,9 +152,54 @@ async function loadEvents() {
   text-decoration: none;
 }
 
-.loading, .empty-state {
+.loading {
   text-align: center;
   padding: 40px;
   color: #666;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.empty-state h3 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.empty-state p {
+  font-size: 1.1em;
+  margin-bottom: 30px;
+}
+
+.submit-first-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.submit-first-btn:hover {
+  background: #218838;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .event-item {
+    flex-direction: column;
+  }
+  
+  .event-year {
+    margin-right: 0;
+    margin-bottom: 10px;
+    text-align: center;
+  }
 }
 </style>
