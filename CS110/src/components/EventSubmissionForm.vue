@@ -152,6 +152,7 @@ function resetForm() {
   background: #f9f9f9;
   border-radius: 8px;
   margin-bottom: 30px;
+  color: black;
 }
 
 .event-form {
