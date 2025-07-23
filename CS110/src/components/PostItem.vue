@@ -60,7 +60,7 @@ async function loadReactions() {
 
 async function handleLike() {
   if (!currentUser.value) {
-    alert('Please log in to react to posts')
+    alert(' react to posts')
     return
   }
   
@@ -73,7 +73,7 @@ async function handleLike() {
 
 async function handleDislike() {
   if (!currentUser.value) {
-    alert('Please log in to react to posts')
+    alert(' react to posts')
     return
   }
   

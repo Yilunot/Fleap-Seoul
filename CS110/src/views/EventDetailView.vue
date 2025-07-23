@@ -28,14 +28,14 @@
           <div class="meta-item">
             <strong>📚 Source:</strong> {{ event.source }}
           </div>
-          <div v-if="event.submittedBy" class="meta-item">
-            <strong>👤 Submitted by:</strong> {{ getSubmitterName(event.submittedBy) }}
+          <div v-if="event.submittedBy || event.submittedByEmail" class="meta-item">
+            <strong>👤 Submitted by:</strong> {{ getSubmitterName(event.submittedByEmail || event.submittedBy) }}
           </div>
           <div v-if="event.submittedAt" class="meta-item">
             <strong>📅 Submitted on:</strong> {{ formatDate(event.submittedAt) }}
           </div>
-          <div v-if="event.approvedBy" class="meta-item admin-info">
-            <strong>✅ Approved by:</strong> {{ getSubmitterName(event.approvedBy) }}
+          <div v-if="event.approvedBy || event.approvedByEmail" class="meta-item admin-info">
+            <strong>✅ Approved by:</strong> {{ getSubmitterName(event.approvedByEmail || event.approvedBy) }}
             <span v-if="event.approvedAt"> on {{ formatDate(event.approvedAt) }}</span>
           </div>
         </div>
@@ -209,6 +209,7 @@ function formatDate(timestamp) {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: black;
 }
 
 .meta-item:last-child {

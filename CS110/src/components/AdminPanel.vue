@@ -166,6 +166,9 @@ async function approveSubmission(submission) {
       date: submission.date,
       description: submission.description,
       source: submission.source,
+      submittedBy: submission.submittedBy,
+      submittedByEmail: submission.submittedByEmail,
+      submittedAt: submission.submittedAt,
       approvedBy: currentUser.value.uid,
       approvedByEmail: currentUser.value.email,
       approvedAt: new Date(),
@@ -260,6 +263,7 @@ function formatDate(timestamp) {
   margin: 0 auto;
   padding: 20px;
   padding-top: 80px;
+  color: black;
 }
 
 .loading, .access-denied, .empty-state {
@@ -313,6 +317,7 @@ function formatDate(timestamp) {
 .submission-content p {
   margin: 8px 0;
   font-size: 14px;
+  color: black;
 }
 
 .admin-actions {
