@@ -47,19 +47,20 @@ async function handleLogout() {
   <header>
     <div class="Navbar-header">
       <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink 
-          v-if="currentUser" 
-          to="/" 
-          @click="handleLogout"
-        >
-          Logout
-        </RouterLink>
-        <RouterLink v-else to="/login">Login</RouterLink>
-        <RouterLink to="/events">Historical Events</RouterLink>
-        <RouterLink v-if="currentUser" to="/my-submissions">My Submissions</RouterLink>
-        <RouterLink v-if="isAdmin" to="/admin" class="admin-link">Admin Panel</RouterLink>
-      </nav>
+  <RouterLink to="/">Home</RouterLink>
+  <button 
+    v-if="currentUser" 
+    @click="handleLogout"
+    class="logout-btn"
+    type="button"
+  >
+    Logout
+  </button>
+  <RouterLink v-else to="/login">Login</RouterLink>
+  <RouterLink to="/events">Historical Events</RouterLink>
+  <RouterLink v-if="currentUser" to="/my-submissions">My Submissions</RouterLink>
+  <RouterLink v-if="isAdmin" to="/admin" class="admin-link">Admin Panel</RouterLink>
+</nav>
     </div>
   </header>
   <RouterView />
@@ -101,5 +102,21 @@ nav a.router-link-active {
 
 .admin-link:hover {
   background-color: #c82333 !important;
+}
+
+nav .logout-btn {
+  background: none;
+  border: none;
+  color: #333;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+  transition: background-color 0.2s;
+}
+
+nav .logout-btn:hover {
+  background-color: #007bff;
+  color: white;
 }
 </style>

@@ -418,10 +418,6 @@ function handleEventSubmitted() {
   margin-left: 280px;
 }
 
-.timeline-tab {
-  /* EventTimeLine will handle its own styling */
-}
-
 .submit-tab {
   max-width: 800px;
   margin: 0 auto;
