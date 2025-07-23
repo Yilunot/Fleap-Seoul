@@ -389,6 +389,7 @@ function formatDate(timestamp) {
   background: #f8f9fa;
   border-radius: 8px;
   margin-bottom: 30px;
+  color: black;
 }
 
 .login-prompt a {
