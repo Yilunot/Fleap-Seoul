@@ -13,10 +13,21 @@
       <div v-for="event in sortedEvents" :key="event.id" class="event-item">
         <div class="event-year">{{ event.year }}</div>
         <div class="event-content">
-          <h3>{{ event.title }}</h3>
+          <h3>
+            <RouterLink :to="`/events/${event.id}`" class="event-title-link">
+              {{ event.title }}
+            </RouterLink>
+          </h3>
           <p class="event-date" v-if="event.date">{{ event.date }}</p>
-          <p>{{ event.description }}</p>
+          <p class="event-description">{{ event.description }}</p>
           <small>Source: {{ event.source }}</small>
+          
+          <!-- Quick Actions -->
+          <div class="event-actions">
+            <RouterLink :to="`/events/${event.id}`" class="discuss-link">
+              💬 Join Discussion
+            </RouterLink>
+          </div>
         </div>
       </div>
     </div>
@@ -74,7 +85,7 @@ async function loadEvents() {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  padding-top: 80px; /* Account for fixed header */
+  padding-top: 80px;
 }
 
 .submission-section {
@@ -88,6 +99,11 @@ async function loadEvents() {
   border-left: 4px solid #007bff;
   background: #f8f9fa;
   border-radius: 8px;
+  transition: box-shadow 0.2s ease;
+}
+
+.event-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .event-year {
@@ -100,7 +116,17 @@ async function loadEvents() {
 
 .event-content h3 {
   margin: 0 0 10px 0;
+}
+
+.event-title-link {
   color: #333;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.event-title-link:hover {
+  color: #007bff;
+  text-decoration: underline;
 }
 
 .event-date {
@@ -109,9 +135,31 @@ async function loadEvents() {
   margin: 0 0 10px 0;
 }
 
-.event-content p {
-  margin: 0 0 10px 0;
+.event-description {
+  margin: 0 0 15px 0;
   line-height: 1.5;
+  color: #555;
+}
+
+.event-actions {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #dee2e6;
+}
+
+.discuss-link {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 0.9em;
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.discuss-link:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+  text-decoration: none;
 }
 
 .loading, .empty-state {
