@@ -84,7 +84,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { collection, query, orderBy, getDocs, addDoc, deleteDoc, doc, where } from 'firebase/firestore'
+import { collection, query, getDocs, addDoc, deleteDoc, doc, where } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from '../firebaseResources'
 
@@ -124,8 +124,7 @@ async function loadComments() {
     const commentsRef = collection(db, 'eventComments')
     const q = query(
       commentsRef,
-      where('eventId', '==', props.eventId),
-      orderBy('createdAt', 'desc')
+      where('eventId', '==', props.eventId)
     )
     
     const snapshot = await getDocs(q)

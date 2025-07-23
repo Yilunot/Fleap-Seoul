@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -7,22 +6,27 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView,
+      component: () => import('../views/HomeView.vue')
     },
     {
       path: '/login',
       name: 'login',
-      component: () => import('../views/LoginView.vue'),
+      component: () => import('../views/LoginView.vue')
     },
     {
       path: '/user/:userId',
       name: 'user-profile',
-      component: () => import('../views/UserProfileView.vue'),
+      component: () => import('../views/UserProfileView.vue')
     },
     {
       path: '/events',
       name: 'events',
       component: () => import('../views/EventsView.vue')
+    },
+    {
+      path: '/events/:eventId',
+      name: 'event-detail',
+      component: () => import('../views/EventDetailView.vue')
     },
     {
       path: '/my-submissions',
@@ -35,8 +39,8 @@ const router = createRouter({
       name: 'admin',
       component: () => import('../views/AdminView.vue'),
       meta: { requiresAuth: true, requiresAdmin: true }
-    },
-  ],
+    }
+  ]
 })
 
 export default router
