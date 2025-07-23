@@ -1,6 +1,12 @@
 <template>
   <div class="timeline-container">
-    <h2>Historical Events Timeline</h2>
+    <div class="timeline-header">
+      <h2 v-if="selectedPeriod === 'all'">All Historical Events ({{ filteredEvents.length }})</h2>
+      <h2 v-else>Events from {{ selectedPeriod }} ({{ filteredEvents.length }})</h2>
+      <p v-if="selectedPeriod !== 'all'" class="period-description">
+        Showing events from {{ selectedPeriod }}
+      </p>
+    </div>
     
     <div v-if="loading" class="loading">Loading events...</div>
     
@@ -26,53 +32,44 @@
         </div>
       </div>
     </div>
-    <div v-if="activeTab === 'timeline'" class="timeline-tab">
-      <EventTimeLine @switchToSubmit="handleSwitchToSubmit" />
-    </div>
-    <div v-if="!loading && events.length === 0" class="empty-state">
-      <h3>No Historical Events Yet</h3>
-      <p>Be the first to submit a historical event!</p>
+    
+    <div v-if="!loading && filteredEvents.length === 0" class="empty-state">
+      <h3 v-if="selectedPeriod === 'all'">No Historical Events Yet</h3>
+      <h3 v-else>No Events in {{ selectedPeriod }}</h3>
+      <p v-if="selectedPeriod === 'all'">Be the first to submit a historical event!</p>
+      <p v-else>No events found for this time period. Try selecting a different period or submit a new event.</p>
       <button @click="$emit('switchToSubmit')" class="submit-first-btn">
-        Submit First Event
+        Submit Event
       </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, defineEmits } from 'vue'
-import { collection, getDocs, orderBy, query } from 'firebase/firestore'
-import { db } from '../firebaseResources'
+import { ref, computed, defineEmits, defineProps, watch } from 'vue'
 
 const emit = defineEmits(['switchToSubmit'])
+const props = defineProps({
+  filteredEvents: {
+    type: Array,
+    default: () => []
+  },
+  selectedPeriod: {
+    type: String,
+    default: 'all'
+  }
+})
 
-const events = ref([])
-const loading = ref(true)
+const loading = ref(false)
 
 const sortedEvents = computed(() => {
-  return events.value.sort((a, b) => b.year - a.year)
+  return props.filteredEvents.sort((a, b) => b.year - a.year)
 })
 
-onMounted(async () => {
-  await loadEvents()
-})
-
-async function loadEvents() {
-  try {
-    const eventsRef = collection(db, 'events')
-    const q = query(eventsRef, orderBy('year', 'desc'))
-    const snapshot = await getDocs(q)
-    
-    events.value = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }))
-  } catch (error) {
-    console.error('Error loading events:', error)
-  } finally {
-    loading.value = false
-  }
-}
+// Watch for changes in filtered events to show loading state
+watch(() => props.filteredEvents, () => {
+  loading.value = false
+}, { immediate: true })
 </script>
 
 <style scoped>
@@ -80,6 +77,21 @@ async function loadEvents() {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
+}
+
+.timeline-header {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.timeline-header h2 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.period-description {
+  color: #666;
+  font-style: italic;
 }
 
 .event-item {
