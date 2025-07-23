@@ -2,17 +2,19 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { auth, db } from '../firebaseResources'
 import { onAuthStateChanged } from 'firebase/auth'
-import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore'
+import { collection, getDocs, addDoc, deleteDoc, doc, query, where } from 'firebase/firestore'
+import PostReplies from './PostReplies.vue' // Add this import
 
 const props = defineProps(['post'])
 
 const reactions = ref([])
 const currentUser = ref(null)
+const showReplies = ref(false) // Add this for toggling replies
+const replyCount = ref(0) // Add this to track reply count
 
 // Watch for auth state changes
 watch(currentUser, (newUser) => {
   if (!newUser) {
-    // User logged out - clear reactions and reload
     reactions.value = []
     loadReactions()
   }
@@ -34,14 +36,13 @@ const dislikeCount = computed(() => {
 })
 
 onMounted(() => {
-  // Watch for auth state changes
   onAuthStateChanged(auth, (user) => {
     currentUser.value = user
-    // Reload reactions when auth state changes
     loadReactions()
   })
   
   loadReactions()
+  loadReplyCount() // Add this
 })
 
 async function loadReactions() {
@@ -58,9 +59,30 @@ async function loadReactions() {
   }
 }
 
+// Add this function to load reply count
+async function loadReplyCount() {
+  try {
+    const repliesRef = collection(db, 'postReplies')
+    const q = query(repliesRef, where('postId', '==', props.post.id))
+    const snapshot = await getDocs(q)
+    replyCount.value = snapshot.docs.length
+  } catch (error) {
+    console.error('Error loading reply count:', error)
+    replyCount.value = 0
+  }
+}
+
+// Add this function to toggle replies
+function toggleReplies() {
+  showReplies.value = !showReplies.value
+  if (showReplies.value) {
+    loadReplyCount() // Refresh count when opening
+  }
+}
+
 async function handleLike() {
   if (!currentUser.value) {
-    alert(' react to posts')
+    alert('Please log in to react to posts')
     return
   }
   
@@ -73,7 +95,7 @@ async function handleLike() {
 
 async function handleDislike() {
   if (!currentUser.value) {
-    alert(' react to posts')
+    alert('Please log in to react to posts')
     return
   }
   
@@ -86,13 +108,11 @@ async function handleDislike() {
 
 async function addReaction(type) {
   try {
-    // IMPORTANT: Remove existing reaction first to prevent duplicates
     const existingReaction = reactions.value.find(r => r.userId === currentUser.value.uid)
     if (existingReaction) {
       await deleteDoc(doc(db, `posts/${props.post.id}/reactions`, existingReaction.id))
     }
     
-    // Add new reaction
     const reactionsRef = collection(db, `posts/${props.post.id}/reactions`)
     await addDoc(reactionsRef, {
       userId: currentUser.value.uid,
@@ -169,9 +189,22 @@ function formatDate(timestamp) {
         >
           👎 {{ dislikeCount }}
         </button>
+        
+        <!-- Add Reply Button -->
+        <button 
+          @click="toggleReplies"
+          class="reaction-btn reply-btn"
+        >
+          💬 {{ replyCount }} {{ replyCount === 1 ? 'Reply' : 'Replies' }}
+        </button>
       </div>
-      <!-- Show login prompt when not authenticated -->
+      
       <div v-if="!currentUser" class="login-prompt">
+      </div>
+      
+      <!-- Add Replies Section -->
+      <div v-if="showReplies">
+        <PostReplies :postId="post.id" @replyAdded="loadReplyCount" />
       </div>
     </footer>
   </article>
@@ -179,7 +212,7 @@ function formatDate(timestamp) {
 
 <style scoped>
 article {
-  border: 1px solid #e90000;
+  border: 1px solid #e9ecef;
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1rem;
@@ -241,6 +274,12 @@ section p {
   background: #f8d7da;
   border-color: #dc3545;
   color: #721c24;
+}
+
+.reply-btn:hover {
+  background: #e3f2fd;
+  border-color: #2196f3;
+  color: #0d47a1;
 }
 
 .login-prompt {
