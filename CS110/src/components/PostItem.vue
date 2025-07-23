@@ -1,60 +1,26 @@
-<template>
-  <article>
-    <header>
-      <p>by {{ post.author }} 
-        <span v-if="post.timestamp"> | {{ formatDate(post.timestamp) }}</span>
-      </p>
-    </header>
-    <section>
-      <p>{{ post.content }}</p>
-    </section>
-    <footer class="post-actions">
-      <div class="reaction-buttons">
-        <button 
-          @click="handleLike" 
-          :class="{ 'active': userReaction === 'like' }"
-          class="reaction-btn like-btn"
-          :disabled="!currentUser"
-        >
-          👍 {{ likeCount }}
-        </button>
-        <button 
-          @click="handleDislike" 
-          :class="{ 'active': userReaction === 'dislike' }"
-          class="reaction-btn dislike-btn"
-          :disabled="!currentUser"
-        >
-          👎 {{ dislikeCount }}
-        </button>
-      </div>
-    </footer>
-  </article>
-</template>
-
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { auth, db } from '../firebaseResources'
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore'
+import { onAuthStateChanged } from 'firebase/auth'
+import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore'
 
-const props = defineProps({
-  post: {
-    type: Object,
-    required: true
-  }
-})
+const props = defineProps(['post'])
 
 const reactions = ref([])
 const currentUser = ref(null)
 
-onMounted(async () => {
-  if (auth.currentUser) {
-    currentUser.value = auth.currentUser
+// Watch for auth state changes
+watch(currentUser, (newUser) => {
+  if (!newUser) {
+    // User logged out - clear reactions and reload
+    reactions.value = []
+    loadReactions()
   }
-  await loadReactions()
 })
 
 const userReaction = computed(() => {
   if (!currentUser.value) return null
+  
   const reaction = reactions.value.find(r => r.userId === currentUser.value.uid)
   return reaction?.type || null
 })
@@ -67,6 +33,17 @@ const dislikeCount = computed(() => {
   return reactions.value.filter(r => r.type === 'dislike').length
 })
 
+onMounted(() => {
+  // Watch for auth state changes
+  onAuthStateChanged(auth, (user) => {
+    currentUser.value = user
+    // Reload reactions when auth state changes
+    loadReactions()
+  })
+  
+  loadReactions()
+})
+
 async function loadReactions() {
   try {
     const reactionsRef = collection(db, `posts/${props.post.id}/reactions`)
@@ -77,11 +54,15 @@ async function loadReactions() {
     }))
   } catch (error) {
     console.error('Error loading reactions:', error)
+    reactions.value = []
   }
 }
 
 async function handleLike() {
-  if (!currentUser.value) return
+  if (!currentUser.value) {
+    alert('Please log in to react to posts')
+    return
+  }
   
   if (userReaction.value === 'like') {
     await removeReaction()
@@ -91,7 +72,10 @@ async function handleLike() {
 }
 
 async function handleDislike() {
-  if (!currentUser.value) return
+  if (!currentUser.value) {
+    alert('Please log in to react to posts')
+    return
+  }
   
   if (userReaction.value === 'dislike') {
     await removeReaction()
@@ -102,9 +86,10 @@ async function handleDislike() {
 
 async function addReaction(type) {
   try {
-    // Remove existing reaction if any
-    if (userReaction.value) {
-      await removeReaction()
+    // IMPORTANT: Remove existing reaction first to prevent duplicates
+    const existingReaction = reactions.value.find(r => r.userId === currentUser.value.uid)
+    if (existingReaction) {
+      await deleteDoc(doc(db, `posts/${props.post.id}/reactions`, existingReaction.id))
     }
     
     // Add new reaction
@@ -125,7 +110,7 @@ async function removeReaction() {
   try {
     const reaction = reactions.value.find(r => r.userId === currentUser.value.uid)
     if (reaction) {
-      await deleteDoc(doc(db, `posts/${props.post.id}/reactions/${reaction.id}`))
+      await deleteDoc(doc(db, `posts/${props.post.id}/reactions`, reaction.id))
       await loadReactions()
     }
   } catch (error) {
@@ -156,48 +141,79 @@ function formatDate(timestamp) {
 }
 </script>
 
+<template>
+  <article>
+    <header>
+      <p>by {{ post.author }} 
+        <span v-if="post.timestamp"> | {{ formatDate(post.timestamp) }}</span>
+      </p>
+    </header>
+    <section>
+      <p>{{ post.content }}</p>
+    </section>
+    <footer class="post-actions">
+      <div class="reaction-buttons">
+        <button 
+          @click="handleLike" 
+          :class="{ 'active': userReaction === 'like' }"
+          class="reaction-btn like-btn"
+          :disabled="!currentUser"
+        >
+          👍 {{ likeCount }}
+        </button>
+        <button 
+          @click="handleDislike" 
+          :class="{ 'active': userReaction === 'dislike' }"
+          class="reaction-btn dislike-btn"
+          :disabled="!currentUser"
+        >
+          👎 {{ dislikeCount }}
+        </button>
+      </div>
+      <!-- Show login prompt when not authenticated -->
+      <div v-if="!currentUser" class="login-prompt">
+      </div>
+    </footer>
+  </article>
+</template>
+
 <style scoped>
 article {
-  border: 1px solid #eee;
-  border-radius: 5px;
-  padding: 16px;
-  margin-bottom: 16px;
-  background: #f1eed8d6;
-}
-
-header {
-  margin-bottom: 12px;
-  color: #666;
-  font-size: 0.9em;
+  border: 1px solid #e90000;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #fff;
+  color: black;
 }
 
 header p {
-  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem 0;
 }
 
 section p {
-  margin: 0;
-  font-size: 1em;
+  margin: 0 0 1rem 0;
   line-height: 1.5;
-  color: #333;
 }
 
 .post-actions {
-  margin-top: 12px;
-  padding-top: 12px;
   border-top: 1px solid #eee;
+  padding-top: 0.5rem;
 }
 
 .reaction-buttons {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .reaction-btn {
-  background: #f8f9fa;
+  background: #fff;
   border: 1px solid #dee2e6;
   border-radius: 20px;
-  padding: 6px 12px;
+  padding: 5px 12px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 0.9em;
@@ -208,10 +224,11 @@ section p {
 }
 
 .reaction-btn:disabled {
-  background: #e9ecef;
+  background: #f8f9fa;
   border-color: #dee2e6;
   color: #6c757d;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .like-btn.active {
@@ -224,5 +241,11 @@ section p {
   background: #f8d7da;
   border-color: #dc3545;
   color: #721c24;
+}
+
+.login-prompt {
+  color: #666;
+  font-style: italic;
+  text-align: center;
 }
 </style>

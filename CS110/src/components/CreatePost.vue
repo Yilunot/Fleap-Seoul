@@ -57,7 +57,6 @@ button {
 }
 .CreatePost {
   margin-bottom: 0.5em;
-  font-size: 1.2em;
-  color: #333;
-}
+  font-size: 1.5em;
+  color: #000000;}
 </style>

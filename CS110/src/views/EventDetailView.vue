@@ -18,14 +18,26 @@
       <!-- Event Content -->
       <div class="event-content">
         <h1>{{ event.title }}</h1>
-        <p v-if="event.date" class="event-date">{{ event.date }}</p>
+        <p v-if="event.date" class="event-date">📅 {{ event.date }}</p>
         <div class="event-description">
           <p>{{ event.description }}</p>
         </div>
+        
+        <!-- Event Meta Information -->
         <div class="event-meta">
-          <p><strong>Source:</strong> {{ event.source }}</p>
-          <p v-if="event.approvedByEmail"><strong>Approved by:</strong> {{ event.approvedByEmail }}</p>
-          <p v-if="event.approvedAt"><strong>Approved on:</strong> {{ formatDate(event.approvedAt) }}</p>
+          <div class="meta-item">
+            <strong>📚 Source:</strong> {{ event.source }}
+          </div>
+          <div v-if="event.submittedBy" class="meta-item">
+            <strong>👤 Submitted by:</strong> {{ getSubmitterName(event.submittedBy) }}
+          </div>
+          <div v-if="event.submittedAt" class="meta-item">
+            <strong>📅 Submitted on:</strong> {{ formatDate(event.submittedAt) }}
+          </div>
+          <div v-if="event.approvedBy" class="meta-item admin-info">
+            <strong>✅ Approved by:</strong> {{ getSubmitterName(event.approvedBy) }}
+            <span v-if="event.approvedAt"> on {{ formatDate(event.approvedAt) }}</span>
+          </div>
         </div>
       </div>
       
@@ -69,6 +81,12 @@ async function loadEvent() {
   }
 }
 
+function getSubmitterName(email) {
+  if (!email) return 'Unknown'
+  // Extract username from email (part before @)
+  return email.split('@')[0]
+}
+
 function formatDate(timestamp) {
   if (!timestamp) return 'Unknown'
   
@@ -79,7 +97,9 @@ function formatDate(timestamp) {
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
   })
 }
 </script>
@@ -175,5 +195,33 @@ function formatDate(timestamp) {
 
 .comments-section {
   margin-top: 40px;
+}
+.event-meta {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 2rem;
+  border-left: 4px solid #007bff;
+}
+
+.meta-item {
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.meta-item:last-child {
+  margin-bottom: 0;
+}
+
+.admin-info {
+  font-size: 0.9rem;
+  color: #666;
+  opacity: 0.8;
+}
+
+.admin-info strong {
+  color: #28a745;
 }
 </style>
