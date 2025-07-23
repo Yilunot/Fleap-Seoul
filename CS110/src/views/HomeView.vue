@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { auth, db } from '../firebaseResources'
-import { collection, getDocs, addDoc, query, orderBy, where, serverTimestamp, doc, updateDoc, arrayUnion, getDoc, limit } from 'firebase/firestore'
+import { collection, getDocs, addDoc, query, orderBy, where, serverTimestamp, doc, updateDoc, arrayUnion, getDoc, limit, deleteDoc } from 'firebase/firestore'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import PostFeed from '@/components/PostFeed.vue'
 import Followers from '@/components/Followers.vue'
@@ -9,6 +9,7 @@ import LoginButton from '@/components/LoginButton.vue'
 import CreatePost from '@/components/CreatePost.vue'
 import UserStats from '@/components/UserStats.vue'
 import LogOutButton from '@/components/LogOutButton.vue'
+
 
 const currentUser = ref(null)
 const currentUserDoc = ref(null)
@@ -18,7 +19,8 @@ const suggestedUsers = ref([])
 const showUserPosts = ref(false)
 const selectedUser = ref(null)
 const selectedUserPosts = ref([])
-const viewMode = ref('all') // 'all', 'user', 'selected'
+const viewMode = ref('all')
+const followingUsers = ref([])
 
 onMounted(() => {
   console.log('🚀 HomeView mounted')
@@ -44,24 +46,59 @@ onMounted(() => {
 
 async function loadCurrentUserDoc() {
   if (!currentUser.value) return
+  
   try {
     console.log('🔍 Loading current user document...')
+    
     const usersRef = collection(db, 'users')
     const q = query(usersRef, where('email', '==', currentUser.value.email))
     const querySnapshot = await getDocs(q)
     
     if (!querySnapshot.empty) {
-      const userDoc = querySnapshot.docs[0]
+      const userDocData = querySnapshot.docs[0]
       currentUserDoc.value = {
-        id: userDoc.id,
-        ...userDoc.data()
+        id: userDocData.id,
+        ...userDocData.data()
       }
       console.log('✅ Current user document loaded:', currentUserDoc.value)
-    } else {
-      console.log('❌ No user document found')
+      
+      // Load following users after loading current user doc
+      await loadFollowingUsers()
     }
   } catch (error) {
     console.error('Error loading current user document:', error)
+  }
+}
+
+async function handleUnfollow(userToUnfollow) {
+  if (!currentUserDoc.value) return
+  
+  try {
+    console.log('Unfollowing user:', userToUnfollow.email)
+    
+    // Remove from current user's following list
+    const updatedFollowing = (currentUserDoc.value.following || []).filter(id => id !== userToUnfollow.id)
+    await updateDoc(doc(db, 'users', currentUserDoc.value.id), {
+      following: updatedFollowing
+    })
+    
+    // Remove from target user's followers list
+    const targetUserDoc = await getDoc(doc(db, 'users', userToUnfollow.id))
+    if (targetUserDoc.exists()) {
+      const targetUserData = targetUserDoc.data()
+      const updatedFollowers = (targetUserData.followers || []).filter(id => id !== currentUserDoc.value.id)
+      await updateDoc(doc(db, 'users', userToUnfollow.id), {
+        followers: updatedFollowers
+      })
+    }
+    
+    // Reload current user doc and following users
+    await loadCurrentUserDoc()
+    
+    console.log('✅ Successfully unfollowed:', userToUnfollow.email)
+    
+  } catch (error) {
+    console.error('Error unfollowing user:', error)
   }
 }
 
@@ -257,6 +294,47 @@ function togglePostView() {
     selectedUser.value = null
   }
 }
+async function loadFollowingUsers() {
+  if (!currentUserDoc.value) {
+    followingUsers.value = []
+    return
+  }
+  
+  try {
+    console.log('🔍 Loading following users...')
+    
+    const followingIds = currentUserDoc.value.following || []
+    console.log('📋 Following IDs:', followingIds)
+    
+    if (followingIds.length === 0) {
+      followingUsers.value = []
+      return
+    }
+    
+    const followingUsersData = []
+    
+    for (const userId of followingIds) {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', userId))
+        if (userDoc.exists()) {
+          followingUsersData.push({
+            id: userDoc.id,
+            ...userDoc.data()
+          })
+        }
+      } catch (error) {
+        console.error('Error loading following user:', userId, error)
+      }
+    }
+    
+    followingUsers.value = followingUsersData
+    console.log('✅ Following users loaded:', followingUsers.value)
+    
+  } catch (error) {
+    console.error('Error loading following users:', error)
+    followingUsers.value = []
+  }
+}
 
 function getCurrentPosts() {
   if (viewMode.value === 'selected') {
@@ -284,7 +362,7 @@ function getToggleButtonText() {
   } else if (viewMode.value === 'user') {
     return 'Show All Posts'
   } else {
-    return 'Show My Posts'
+    return 'Show My Feed'
   }
 }
 
@@ -353,7 +431,46 @@ async function handleLogout() {
           :onUserClick="handleUserClick"
           title="Suggested Users"
         />
+        
+        <!-- Following Section -->
+        <div v-if="currentUser && followingUsers.length > 0" class="following-section">
+          <h3>Following</h3>
+          <div class="following-list">
+            <div 
+              v-for="user in followingUsers" 
+              :key="user.id"
+              class="following-user-item"
+            >
+              <div class="following-user-info">
+                <RouterLink 
+                  :to="`/user/${user.id}`" 
+                  class="following-user-link"
+                >
+                  <span class="following-username">{{ user.email.split('@')[0] }}</span>
+                </RouterLink>
+                <div class="following-user-stats">
+                  <span class="stat">{{ (user.posts || []).length }} posts</span>
+                  <span class="stat">{{ (user.followers || []).length }} followers</span>
+                </div>
+              </div>
+              <button 
+                @click="handleUnfollow(user)"
+                class="unfollow-btn"
+                title="Unfollow"
+              >
+                Unfollow
+              </button>
+            </div>
+          </div>
+        </div>
+        
+      
+        <div v-else-if="currentUser && followingUsers.length === 0" class="no-following">
+          <h3>Following</h3>
+          <p>You're not following anyone yet. Discover new people in the suggested users above!</p>
+        </div>
       </div>
+      
     </div>
   </main>
 </template>
@@ -384,33 +501,163 @@ async function handleLogout() {
 
 .right-column {
   flex: 0 0 250px;
+  padding: 0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: none;
+}
+
+.card {
   background: #f1eed8d6;
   color: #333;
+  padding: 1.2rem 1rem;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.card-divider {
+  border: none;
+  border-top: 1.5px solid #2196f3;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.following-section h3,
+.no-following h3 {
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  text-align: left;
+  border: none;
+  padding-bottom: 0;
+}
+
+.following-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.following-user-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  margin-bottom: 0.5rem;
+}
+
+.following-user-info {
+  flex: 1;
+}
+
+.following-user-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.following-username {
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 1rem;
+}
+
+.following-user-stats {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.stat {
+  font-size: 0.75rem;
+  color: #666;
+  background: #f8f9fa;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+}
+
+.unfollow-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.unfollow-btn:hover {
+  background: #dc3545;
+  transform: translateY(-1px);
+}
+
+.unfollow-btn:hover::after {
+  content: " ✗";
+}
+
+.no-following {
+  margin-top: 2rem;
+  background: white;
   padding: 1rem;
   border-radius: 8px;
-  height: fit-content;
-}
-
-.toggle-section {
-  margin-top: 1rem;
-}
-
-.post-header {
   text-align: center;
-  margin-bottom: 1rem;
+  border: 1px solid #e9ecef;
 }
 
-.post-header h2 {
+.no-following h3 {
   color: #333;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 0.5rem;
+}
+
+.no-following p {
+  color: #666;
+  font-size: 0.85rem;
+  line-height: 1.4;
   margin: 0;
 }
 
-.no-posts {
-  text-align: center;
-  color: #666;
-  margin-top: 2rem;
-  padding: 2rem;
-  background-color: #f9f9f9;
-  border-radius: 8px;
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .main-columns {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .left-column, .right-column {
+    flex: none;
+  }
+  
+  .following-section {
+    margin-top: 1rem;
+  }
+  
+  .following-user-item {
+    padding: 0.5rem;
+  }
+  
+  .following-username {
+    font-size: 0.9rem;
+  }
+  
+  .stat {
+    font-size: 0.7rem;
+  }
+  
+  .unfollow-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
 }
 </style>
