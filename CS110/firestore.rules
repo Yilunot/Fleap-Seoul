@@ -32,58 +32,71 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
-    // Follows collection - users can read all follows, but only create/update their own
-    match /{document=**} {
-      allow read, write: if true;
-    }
     
+    // Post reactions
     match /posts/{postId}/reactions/{reactionId} {
       allow read: if request.auth != null;
       allow create, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
-    // NEW: Historical Events
+    
+    // Post replies
+    match /postReplies/{replyId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == resource.data.authorId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.authorId;
+    }
+
+    // Post reply reactions
+    match /postReplyReactions/{reactionId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Historical Events
     match /events/{eventId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
     
-    // NEW: Event submissions for review
+    // Event submissions for review
     match /eventSubmissions/{submissionId} {
-    allow read: if request.auth != null;
-    allow create: if request.auth != null && request.auth.uid == resource.data.submittedBy;
-    allow update: if request.auth != null && 
-      (request.auth.uid == resource.data.submittedBy || 
-      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
-}
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == resource.data.submittedBy;
+      allow update: if request.auth != null && 
+        (request.auth.uid == resource.data.submittedBy || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+    }
     
-    // NEW: Comments on events
-  match /eventComments/{commentId} {
-    allow read: if request.auth != null;
-    allow create: if request.auth != null && request.auth.uid == resource.data.userId;
-    allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-}
+    // Comments on events
+    match /eventComments/{commentId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
      
-    // NEW: Likes/dislikes on event comments
-    match /eventComments/{commentId}/reactions/{reactionId} {
+    // Reactions on event comments
+    match /eventCommentReactions/{reactionId} {
       allow read: if request.auth != null;
       allow create, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
-    // Add these rules for post replies
-    match /postReplies/{replyId} {
+    // Event interpretations
+    match /eventInterpretations/{interpretationId} {
       allow read: if true;
-      allow create: if request.auth != null 
-      && request.auth.uid == resource.data.authorId;
-      allow update, delete: if request.auth != null 
-      && request.auth.uid == resource.data.authorId;
+      allow create: if request.auth != null && request.auth.uid == resource.data.authorId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
 
-    match /postReplyReactions/{reactionId} {
+    // Event interpretation votes
+    match /interpretationVotes/{voteId} {
       allow read: if true;
-      allow create, update, delete: if request.auth != null 
-      && request.auth.uid == resource.data.userId;
-      }
+      allow create, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
     
+    // Fallback rule (be careful with this in production)
+    match /{document=**} {
+      allow read, write: if true;
+    }
   }
 }

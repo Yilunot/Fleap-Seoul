@@ -97,6 +97,8 @@ const props = defineProps({
   }
 })
 
+const emit = defineEmits(['replyAdded'])
+
 // Reactive data
 const replies = ref([])
 const replyReactions = ref([])
@@ -136,8 +138,7 @@ async function loadReplies() {
     const repliesRef = collection(db, 'postReplies')
     const q = query(
       repliesRef,
-      where('postId', '==', props.postId),
-      orderBy('timestamp', 'asc')
+      where('postId', '==', props.postId)
     )
     
     const snapshot = await getDocs(q)
@@ -188,6 +189,7 @@ async function submitReply() {
     
     newReply.value = ''
     await loadReplies()
+    emit('replyAdded') // Emit event to parent
     
   } catch (error) {
     console.error('Error submitting reply:', error)
@@ -211,6 +213,7 @@ async function deleteReply(replyId) {
       await deleteDoc(doc(db, 'postReplyReactions', reaction.id))
     }
     await loadReplyReactions()
+    emit('replyAdded') // Update parent count
     
   } catch (error) {
     console.error('Error deleting reply:', error)
